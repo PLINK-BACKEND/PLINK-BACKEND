@@ -23,7 +23,7 @@ jobs:
 
       # 3. 프로젝트 빌드 (테스트 제외)
       - name: Build with Gradle
-        run: ./gradlew clean build -x test
+        run: chmod +x gradlew && ./gradlew clean build -x test
 
       # 4. EC2 서버로 JAR 전송
       - name: Copy JAR to EC2
