@@ -35,7 +35,7 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
-          source: "build/libs/*.jar"
+          source: "build/libs/*.jar,Dockerfile"
           target: "/home/ubuntu/app"
 
       # 5. EC2에서 Docker 빌드 및 실행
