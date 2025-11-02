@@ -1,5 +1,11 @@
 name: Deploy to EC2
 
+env:
+  AWS_EC2_HOST: ${{ vars.AWS_EC2_HOST }}
+  AWS_EC2_USER: ${{ vars.AWS_EC2_USER }}
+  AWS_SSH_KEY: ${{ vars.AWS_SSH_KEY }}
+
+
 on:
   push:
     branches:
@@ -13,6 +19,12 @@ jobs:
       # 1. GitHub 코드 체크아웃
       - name: Checkout source code
         uses: actions/checkout@v3
+
+      # 1-1. .env 파일 로드
+      - name: Load environment variables
+        run: |
+          export $(grep -v '^#' .env | xargs)
+          echo "Loaded environment variables from .env"
 
       # 2. JDK 환경 설정
       - name: Set up JDK 17
