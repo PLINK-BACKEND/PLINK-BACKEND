@@ -11,6 +11,10 @@ on:
     branches:
       - main  # main 브랜치에 push될 때만 실행
 
+permissions:
+  contents: write
+
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
