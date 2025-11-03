@@ -30,6 +30,16 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+    // 웹소켓 관련 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // S3 관련 의존성 추가
+    implementation platform("software.amazon.awssdk:bom:2.25.47")
+    implementation "software.amazon.awssdk:s3"
+    implementation "software.amazon.awssdk:s3-transfer-manager"
+
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.projectlombok:lombok'
