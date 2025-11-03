@@ -3,3 +3,9 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+cloud:
+  aws:
+    s3:
+      bucket: plink-backend-bucket
+    region:
+      static: ap-northeast-2
