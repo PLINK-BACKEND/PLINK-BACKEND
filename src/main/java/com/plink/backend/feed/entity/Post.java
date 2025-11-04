@@ -1,17 +1,21 @@
 package com.plink.backend.feed.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+// 회원가입 패키지에 있는 User엔티티 import
 import org.apache.catalina.User;
 import org.hibernate.annotations.CreationTimestamp;
 import com.plink.backend.main.entity.Festival;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Builder
 @Entity
 @Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Post {
     @Id @GeneratedValue
     private Long id;
@@ -21,7 +25,7 @@ public class Post {
 
     @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user; //추후 추가함
+    private User author; //추후 추가함
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Comment> comments;
@@ -40,12 +44,11 @@ public class Post {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @CreationTimestamp
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    public void updateTitle(String title) {
-        this.title = title;
-    }
+
+    public void updateTitle(String title) {this.title = title; }
 
     public void updateContent(String content) {
         this.content = content;

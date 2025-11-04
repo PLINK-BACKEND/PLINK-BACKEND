@@ -1,6 +1,9 @@
 package com.plink.backend.feed.dto;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -8,8 +11,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 
-public class PostUpdateRequest {
+public class PostRequest {
     private String title;
     private String content;
     private String tagName;
+    private List<MultipartFile> images;
+    private Long festivalId;
 }

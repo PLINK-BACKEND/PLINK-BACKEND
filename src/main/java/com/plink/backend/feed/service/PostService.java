@@ -1,5 +1,9 @@
 package com.plink.backend.feed.service;
 
+import com.plink.backend.feed.dto.PostRequest;
+import com.plink.backend.main.repository.FestivalRepository;
+import com.plink.backend.main.entity.Festival;
+import com.plink.backend.service.S3Service;
 import com.plink.backend.feed.entity.Image;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.feed.entity.Tag;
@@ -8,6 +12,8 @@ import com.plink.backend.feed.repository.PostRepository;
 import com.plink.backend.feed.repository.TagRepository;
 import com.plink.backend.feed.dto.PostUpdateRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,57 +27,77 @@ import java.util.List;
 public class PostService {
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
-    private final ImageRepository imafeRepository;
+    private final ImageRepository imageRepository;
     private final S3Service s3Service;
+    private final FestivalRepository festivalRepository;
 
     @Transactional
     // 게시글 작성하기
-    public Post createpost(User author, String title, String content,
-                           String tagName, List<MultipartFile> images) throws IOException {
-        // 이미지 개수 검증
-        if (images != null && images.size() > 3) {
-            throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
+    public Post createpost(User author, PostRequest requestDto) throws IOException {
 
-        // 태그 찾기
-        Tag tag = tagRepository.findByName(tagName)
+        // 태그 검증
+        Tag tag = tagRepository.findByName(requestDto.getTagName())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
 
+        // 행사 검증
+        Festival festival = festivalRepository.findById(requestDto.getFestivalId())
+                .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 행사입니다."));
+
+        // 이미지 개수 검증
+        if (requestDto.getImages() != null && requestDto.getImages().size() > 3) {
+            throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
+        }
+
+
         // 게시글 생성
-        Post post = new Post(author, title, content,tag);
+        Post post = Post.builder()
+                .author(author)
+                .title(requestDto.getTitle())
+                .content(requestDto.getContent())
+                .tag(tag)
+                .festival(festival)
+                .build();
         postRepository.save(post);
 
         // 이미지 업로드
-        if (images != null) {
-            for (MultipartFile file : images) {
+        if (requestDto.getImages() != null && !requestDto.getImages().isEmpty()) {
+            for (MultipartFile file : requestDto.getImages()) {
                 String key = s3Service.upload(file,"posts");
-                Image image = new Image(post,key,file.getOriginalFilename());
-                imafeRepository.save(image);
+                Image image = Image.builder()
+                        .post(post)
+                        .s3key(key)
+                        .originalName(file.getOriginalFilename())
+                        .build();
+                imageRepository.save(image);
             }
         }
         return post;
-
-
     }
 
     // 게시글 수정
     @Transactional
-    public Post updatePost(Long postId, PostUpdateRequest req){
+    public Post updatePost(Long postId, User currentAuthor,PostUpdateRequest requestDto){
             Post post = postRepository.findById(postId)
                     .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
+            // 작성자만 수정 권한을 가짐
+            if (!post.getAuthor().equals(currentAuthor)){
+                throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
+            }
+
             // 제목 수정 (값이 들어온 경우에만)
-            if (req.getTitle() != null && !req.getTitle().isBlank()) {
-                post.updateTitle(req.getTitle());
+            if (requestDto.getTitle() != null && !requestDto.getTitle().isBlank()) {
+                post.updateTitle(requestDto.getTitle());
             }
 
             // 내용 수정
-            if (req.getContent() != null && !req.getContent().isBlank()) {
-                post.updateContent(req.getContent());
+            if (requestDto.getContent() != null && !requestDto.getContent().isBlank()) {
+                post.updateContent(requestDto.getContent());
             }
 
             // 태그 수정
-            if (req.getTagName() != null && !req.getTagName().isBlank()) {
-                Tag tag = tagRepository.findByName(req.getTagName())
+            if (requestDto.getTagName() != null && !requestDto.getTagName().isBlank()) {
+                Tag tag = tagRepository.findByName(requestDto.getTagName())
                         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
                 post.changeTag(tag);
             }
@@ -83,28 +109,41 @@ public class PostService {
 
     // 게시글 삭제
     @Transactional
-    public Post deletePost(Long postId){
-            Post post = postRepository.findById(postId)
-                    .orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    public void deletePost(Long postId, User currentAuthor) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-            // 이미지 삭제
+        // 작성자만 삭제 권한을 가짐
+        if (!post.getAuthor().equals(currentAuthor)){
+            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
+        }
+
+        // 이미지 삭제
+        if (post.getImages() != null) {
             for (Image image : post.getImages()) {
-                s3Service.delete(img.getS3key());
+                try {
+                    s3Service.delete(image.getS3key());
+                } catch (Exception e) {
+                    log.warn("S3 이미지 삭제 실패: {}", image.getS3key(), e);
+                }
             }
 
-            postRepository.delete(post);
         }
+        postRepository.delete(post);
+    }
 
 
     // 게시글 조회
-    public Post getPost(Long postId){
-            return postRepository.findById(postId)
-                    .orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-        }
+    @Transactional(readOnly = true)
+    public Post getPostDetail(Long postId){
+        return postRepository.findWithAllById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    }
 
-    // 게시글 모두 조회
-    public List<Post> getPostList(){
-            return postRepository.findAll();
-        }
+    // 게시글 모두 조회 (최신 글이 가장 밑으로)
+    @Transactional(readOnly = true)
+    public Page<Post> getPostList(Pageable pageable) {
+        return postRepository.findAllByOrderByCreatedAtAsc(pageable);
+    }
 
 }

@@ -1,5 +1,6 @@
 package com.plink.backend.feed.dto;
 
+import jakarta.persistence.GeneratedValue;
 import lombok.*;
 
 @Getter
@@ -7,9 +8,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
-public class PostUpdateRequest {
-    private String title;
+public class CommentRequest {
     private String content;
-    private String tagName;
 }
