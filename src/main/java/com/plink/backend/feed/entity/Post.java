@@ -5,21 +5,19 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.catalina.User;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.data.annotation.CreatedBy;
-
+import com.plink.backend.main.entity.Festival;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Getter
 @Setter
-
 public class Post {
     @Id @GeneratedValue
     private Long id;
 
     private String title;
-    private String body;
+    private String content;
 
     @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -45,6 +43,16 @@ public class Post {
     @CreationTimestamp
     private LocalDateTime updatedAt;
 
+    public void updateTitle(String title) {
+        this.title = title;
+    }
 
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
+    public void changeTag(Tag tag) {
+        this.tag = tag;
+    }
 
 }
