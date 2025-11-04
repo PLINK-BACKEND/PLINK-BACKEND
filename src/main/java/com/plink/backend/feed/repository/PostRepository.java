@@ -11,7 +11,15 @@ import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    @EntityGraph(attributePaths = {"author", "comments", "images"})
+    // 상세 조회: author, tag, festival, images, comments까지 한 번에 로딩
+    @EntityGraph(attributePaths = {
+            "author",
+            "tag",
+            "festival",
+            "images",
+            "comments",
+            "comments.author"
+    })
     Optional<Post> findWithAllById(Long id);
     Page<Post> findAllByOrderByCreatedAtAsc(Pageable pageable);
 }

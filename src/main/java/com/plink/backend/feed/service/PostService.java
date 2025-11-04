@@ -1,6 +1,7 @@
 package com.plink.backend.feed.service;
 
 import com.plink.backend.feed.dto.PostRequest;
+import com.plink.backend.feed.dto.PostResponse;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
 import com.plink.backend.service.S3Service;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -124,7 +125,7 @@ public class PostService {
                 try {
                     s3Service.delete(image.getS3key());
                 } catch (Exception e) {
-                    log.warn("S3 이미지 삭제 실패: {}", image.getS3key(), e);
+                    System.out.println("S3 이미지 삭제 실패: {}"+ image.getS3key());
                 }
             }
 
@@ -133,17 +134,20 @@ public class PostService {
     }
 
 
-    // 게시글 조회
+    // 게시글 상세 조회 (댓글/이미지까지 모두 포함)
     @Transactional(readOnly = true)
-    public Post getPostDetail(Long postId){
-        return postRepository.findWithAllById(postId)
+    public PostResponse getPostDetail(Long postId) {
+        Post post = postRepository.findWithAllById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        return PostResponse.from(post);
     }
 
     // 게시글 모두 조회 (최신 글이 가장 밑으로)
     @Transactional(readOnly = true)
-    public Page<Post> getPostList(Pageable pageable) {
-        return postRepository.findAllByOrderByCreatedAtAsc(pageable);
+    public Page<PostResponse> getPostList(Pageable pageable) {
+        return postRepository.findAllByOrderByCreatedAtAsc(pageable)
+                .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
     }
 
 }
