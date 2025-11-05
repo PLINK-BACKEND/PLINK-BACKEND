@@ -34,7 +34,7 @@ public class PostService {
 
     @Transactional
     // 게시글 작성하기
-    public Post createpost(User author, PostRequest requestDto) throws IOException {
+    public Post createPost(User author, PostRequest requestDto) throws IOException {
 
         // 태그 검증
         Tag tag = tagRepository.findByName(requestDto.getTagName())
