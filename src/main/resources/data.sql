@@ -1,8 +1,12 @@
-INSERT INTO tag(name) VALUES ("만남/동행")
-INSERT INTO tag(name) VALUES ("정보/공유")
-INSERT INTO tag(name) VALUES ("질문/요청")
-INSERT INTO tag(name) VALUES ("분실물")
-INSERT INTO tag(name) VALUES ("굿즈/이벤트")
-INSERT INTO tag(name) VALUES ("푸드/맛집")
-INSERT INTO tag(name) VALUES ("잡담/일상")
-INSERT INTO tag(name) VALUES ("기타")
+INSERT INTO tag(name)
+VALUES ("만남/동행"),
+       ("정보/공유"),
+       ("질문/요청"),
+       ("분실물"),
+       ("굿즈/이벤트"),
+       ("푸드/맛집"),
+       ("잡담/일상"),
+       ("기타");
+
+-- 축제
+INSERT INTO festival(name, slug) VALUES ("4호선톤","4호선톤");
