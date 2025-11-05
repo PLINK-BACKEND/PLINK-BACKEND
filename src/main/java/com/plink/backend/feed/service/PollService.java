@@ -19,6 +19,7 @@ public class PollService {
     private final PollVoteRepository pollVoteRepository;
     private final UserService userService;
 
+    // 앙케이트 생성
     @Transactional
     public Poll createPoll(User author, PollCreateRequest request) {
 
@@ -41,6 +42,7 @@ public class PollService {
 
     }
 
+    // 앙케이트 투표
     @Transactional
     public PollResponse vote(Long pollId, Long optionId, Long voterId) {
         Poll poll = pollRepository.findById(pollId)

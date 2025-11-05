@@ -91,12 +91,12 @@ public class PostService {
 
     // 게시글 수정
     @Transactional
-    public Post updatePost(Long postId, User currentAuthor,PostUpdateRequest request){
+    public Post updatePost(User author,PostUpdateRequest request,Long postId){
             Post post = postRepository.findById(postId)
                     .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
             // 작성자만 수정 권한을 가짐
-            if (!post.getAuthor().equals(currentAuthor)){
+            if (!post.getAuthor().equals(author)){
                 throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
             }
 
@@ -120,16 +120,14 @@ public class PostService {
             return post;
         }
 
-
-
     // 게시글 삭제
     @Transactional
-    public void deletePost(Long postId, User currentAuthor) {
+    public void deletePost(User author,Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
         // 작성자만 삭제 권한을 가짐
-        if (!post.getAuthor().equals(currentAuthor)){
+        if (!post.getAuthor().equals(author)){
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
 

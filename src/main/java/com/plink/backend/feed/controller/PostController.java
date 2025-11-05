@@ -26,16 +26,16 @@ public class PostController {
     private final PostService postService;
     private final PollService pollService;
 
-    // 게시글 생성 (POST 요청)
+    // 게시글 작성 (POST 요청)
     @PostMapping
-    public ResponseEntity<PostResponse> createPost
-    (@PathVariable String slug,
-     @AuthenticationPrincipal /*User*/ Object currentUser,
-     @ModelAttribute PostCreateRequest request) throws IOException {
+    public ResponseEntity<PostResponse> createPost(
+            @PathVariable String slug,
+            @AuthenticationPrincipal /*User*/ Object author,
+            @ModelAttribute PostCreateRequest request
+    ) throws IOException {
 
-        User author = (User) currentUser;
-
-        Post post = postService.createPost(author, request);
+        User user = (User) author;
+        Post post = postService.createPost(user, request);
 
         PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
 
@@ -49,11 +49,11 @@ public class PostController {
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @AuthenticationPrincipal  Object currentUser,
-            @RequestBody PostUpdateRequest requestDto
+            @AuthenticationPrincipal  Object author,
+            @RequestBody PostUpdateRequest request
     ){
-        User author =  (User) currentUser;
-        Post updated = postService.updatePost(postId,author,requestDto);
+        User user = (User) author;
+        Post updated = postService.updatePost(user,request,postId);
         PostResponse response = PostResponse.from(updated);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -63,11 +63,10 @@ public class PostController {
     public ResponseEntity<Void> deletePost(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @AuthenticationPrincipal  Object currentUser
+            @AuthenticationPrincipal Object author
     ){
-        User author = (User) currentUser;
-
-        postService.deletePost(postId, author);
+        User user = (User) author;
+        postService.deletePost(user,postId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

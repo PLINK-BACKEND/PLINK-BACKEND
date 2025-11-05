@@ -4,6 +4,7 @@ import com.plink.backend.feed.entity.Poll;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -13,6 +14,7 @@ public class PollResponse {
     private Long pollId;
     private Long selectedOptionId;
     private List<PollOptionResponse> result;
+    private LocalDateTime createdAt;
 
     public static PollResponse from(Poll poll, Long selectedOptionId) {
         return PollResponse.builder()
@@ -28,6 +30,7 @@ public class PollResponse {
                                 )
                                 .toList()
                 )
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 }
