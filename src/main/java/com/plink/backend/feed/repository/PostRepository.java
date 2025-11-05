@@ -21,5 +21,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "comments.author"
     })
     Optional<Post> findWithAllById(Long id);
+    Optional<Post> findById(Long id);
     Page<Post> findAllByOrderByCreatedAtAsc(Pageable pageable);
 }

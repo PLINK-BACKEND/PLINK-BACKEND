@@ -3,6 +3,7 @@ package com.plink.backend.feed.service;
 import com.plink.backend.feed.dto.PostCreateRequest;
 import com.plink.backend.feed.dto.PostResponse;
 import com.plink.backend.feed.entity.*;
+import com.plink.backend.feed.repository.PollVoteRepository;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
 import com.plink.backend.service.S3Service;
@@ -30,19 +31,22 @@ public class PostService {
     private final S3Service s3Service;
     private final FestivalRepository festivalRepository;
     private final PollService pollService;
+    private final UserService userService;
 
     @Transactional
     // 게시글 작성하기
     public Post createPost(User author, PostCreateRequest request) throws IOException {
 
-
-        // 태그 검증
-        Tag tag = tagRepository.findByName(request.getTagName())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
+        // 근데 사용자 검증은 안해도도ㅣ나요
 
         // 행사 검증
         Festival festival = festivalRepository.findById(request.getFestivalId())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 행사입니다."));
+
+        // 태그 검증
+        Tag tag = tagRepository.findById(request.getTagId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
+
 
         // 게시글 타입
         Poll poll = null;
@@ -111,8 +115,8 @@ public class PostService {
             }
 
             // 태그 수정
-            if (request.getTagName() != null && !request.getTagName().isBlank()) {
-                Tag tag = tagRepository.findByName(request.getTagName())
+            if (request.getTagId() != null ) {
+                Tag tag = tagRepository.findById(request.getTagId())
                         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
                 post.changeTag(tag);
             }

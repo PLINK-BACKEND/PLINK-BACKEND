@@ -24,7 +24,6 @@ import java.io.IOException;
 @RequestMapping("/{slug}/post")
 public class PostController {
     private final PostService postService;
-    private final PollService pollService;
 
     // 게시글 작성 (POST 요청)
     @PostMapping
@@ -39,7 +38,7 @@ public class PostController {
 
         PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
     }
 

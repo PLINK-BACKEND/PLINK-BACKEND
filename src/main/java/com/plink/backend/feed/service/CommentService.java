@@ -37,7 +37,7 @@ public class CommentService {
 
     // 댓글 수정하기
     @Transactional
-    public Comment updateComment( User Author, CommentRequest request,Long commentId,) {
+    public Comment updateComment( User Author, CommentRequest request,Long commentId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 

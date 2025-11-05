@@ -12,7 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "polls")
 public class Poll {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

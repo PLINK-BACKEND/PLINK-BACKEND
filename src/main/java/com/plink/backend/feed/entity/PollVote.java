@@ -11,10 +11,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Builder
 @Entity
-@Table(name = "poll_votes",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"poll_id", "voter_id"})})
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"poll_id", "voter_id"})})
 public class PollVote {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
