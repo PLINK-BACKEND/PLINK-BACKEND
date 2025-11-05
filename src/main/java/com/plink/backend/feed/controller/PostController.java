@@ -1,12 +1,14 @@
 package com.plink.backend.feed.controller;
 
-import com.plink.backend.feed.dto.PostRequest;
+import com.plink.backend.feed.dto.PostCreateRequest;
 import com.plink.backend.feed.dto.PostResponse;
 import com.plink.backend.feed.dto.PostUpdateRequest;
 import com.plink.backend.feed.entity.Post;
+import com.plink.backend.feed.entity.PostType;
+import com.plink.backend.feed.service.PollService;
 import com.plink.backend.feed.service.PostService;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -22,18 +24,23 @@ import java.io.IOException;
 @RequestMapping("/{slug}/post")
 public class PostController {
     private final PostService postService;
+    private final PollService pollService;
 
     // 게시글 생성 (POST 요청)
     @PostMapping
     public ResponseEntity<PostResponse> createPost
-    (@PathVariable String slug, @AuthenticationPrincipal /*User*/ Object currentUser,   // 여기 타입은 네 프로젝트에 맞게 변경 (예: CustomUserDetails, User 등)
-     @ModelAttribute PostRequest requestDto) throws IOException {
+    (@PathVariable String slug,
+     @AuthenticationPrincipal /*User*/ Object currentUser,
+     @ModelAttribute PostCreateRequest request) throws IOException {
 
         User author = (User) currentUser;
-        Post post = postService.createPost(author,requestDto);
-        PostResponse response = PostResponse.from(post);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        Post post = postService.createPost(author, request);
+
+        PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
+
+        return ResponseEntity.ok(response);
+
     }
 
 

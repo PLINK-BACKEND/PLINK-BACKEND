@@ -13,6 +13,8 @@ import lombok.*;
 public class Image {
     @Id @GeneratedValue
     private Long id;
+
+    @Column(nullable = false)
     private String s3key;
     private String originalName;
     private String image_url;

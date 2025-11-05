@@ -24,7 +24,9 @@ public class Comment {
     @JoinColumn(name="user_id")
     private User author; //추후 로그인 회원가입 완료되면 수정
 
+    @Column(nullable = false)
     private String content;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

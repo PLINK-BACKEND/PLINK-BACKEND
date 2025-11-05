@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 public class PostResponse {
     private Long id;
+    private String postType;
     private String title;
     private String content;
     private String author;
@@ -41,7 +42,7 @@ public class PostResponse {
                 .updatedAt(post.getUpdatedAt())
                 .imageUrls(post.getImages() == null ? List.of() :
                         post.getImages().stream()
-                                .map(Image::getS3key)            // 필드명이 s3Key면 getS3Key로 수정
+                                .map(Image::getS3key)
                                 .collect(Collectors.toList()))
                 .comments(post.getComments() == null ? List.of() :
                         post.getComments().stream()

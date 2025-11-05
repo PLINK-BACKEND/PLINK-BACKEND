@@ -1,13 +1,11 @@
 package com.plink.backend.feed.service;
 
-import com.plink.backend.feed.dto.PostRequest;
+import com.plink.backend.feed.dto.PostCreateRequest;
 import com.plink.backend.feed.dto.PostResponse;
+import com.plink.backend.feed.entity.*;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
 import com.plink.backend.service.S3Service;
-import com.plink.backend.feed.entity.Image;
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.entity.Tag;
 import com.plink.backend.feed.repository.ImageRepository;
 import com.plink.backend.feed.repository.PostRepository;
 import com.plink.backend.feed.repository.TagRepository;
@@ -31,38 +29,54 @@ public class PostService {
     private final ImageRepository imageRepository;
     private final S3Service s3Service;
     private final FestivalRepository festivalRepository;
+    private final PollService pollService;
 
     @Transactional
     // 게시글 작성하기
-    public Post createPost(User author, PostRequest requestDto) throws IOException {
+    public Post createPost(User author, PostCreateRequest request) throws IOException {
+
 
         // 태그 검증
-        Tag tag = tagRepository.findByName(requestDto.getTagName())
+        Tag tag = tagRepository.findByName(request.getTagName())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
 
         // 행사 검증
-        Festival festival = festivalRepository.findById(requestDto.getFestivalId())
+        Festival festival = festivalRepository.findById(request.getFestivalId())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 행사입니다."));
 
+        // 게시글 타입
+        Poll poll = null;
+        if (request.getPostType() == PostType.POLL) {
+            poll = pollService.createPoll(author,request.getPoll()); // 앙케이트는 따로 처리
+        }
+
         // 이미지 개수 검증
-        if (requestDto.getImages() != null && requestDto.getImages().size() > 3) {
+        if (request.getImages() != null && request.getImages().size() > 3) {
             throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
+        }
+
+        // 내용 검증
+        if (request.getPostType() == PostType.NORMAL &&
+                (request.getContent() == null || request.getContent().isBlank())) {
+            throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
         }
 
 
         // 게시글 생성
         Post post = Post.builder()
                 .author(author)
-                .title(requestDto.getTitle())
-                .content(requestDto.getContent())
+                .title(request.getTitle())
+                .content(request.getContent())
                 .tag(tag)
                 .festival(festival)
+                .postType(request.getPostType())
+                .poll(poll)
                 .build();
         postRepository.save(post);
 
         // 이미지 업로드
-        if (requestDto.getImages() != null && !requestDto.getImages().isEmpty()) {
-            for (MultipartFile file : requestDto.getImages()) {
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            for (MultipartFile file : request.getImages()) {
                 String key = s3Service.upload(file,"posts");
                 Image image = Image.builder()
                         .post(post)
@@ -77,7 +91,7 @@ public class PostService {
 
     // 게시글 수정
     @Transactional
-    public Post updatePost(Long postId, User currentAuthor,PostUpdateRequest requestDto){
+    public Post updatePost(Long postId, User currentAuthor,PostUpdateRequest request){
             Post post = postRepository.findById(postId)
                     .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
@@ -87,18 +101,18 @@ public class PostService {
             }
 
             // 제목 수정 (값이 들어온 경우에만)
-            if (requestDto.getTitle() != null && !requestDto.getTitle().isBlank()) {
-                post.updateTitle(requestDto.getTitle());
+            if (request.getTitle() != null && !request.getTitle().isBlank()) {
+                post.updateTitle(request.getTitle());
             }
 
             // 내용 수정
-            if (requestDto.getContent() != null && !requestDto.getContent().isBlank()) {
-                post.updateContent(requestDto.getContent());
+            if (request.getContent() != null && !request.getContent().isBlank()) {
+                post.updateContent(request.getContent());
             }
 
             // 태그 수정
-            if (requestDto.getTagName() != null && !requestDto.getTagName().isBlank()) {
-                Tag tag = tagRepository.findByName(requestDto.getTagName())
+            if (request.getTagName() != null && !request.getTagName().isBlank()) {
+                Tag tag = tagRepository.findByName(request.getTagName())
                         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
                 post.changeTag(tag);
             }

@@ -20,6 +20,11 @@ public class Post {
     @Id @GeneratedValue
     private Long id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostType postType;
+
+    @Column(nullable = false)
     private String title;
     private String content;
 
