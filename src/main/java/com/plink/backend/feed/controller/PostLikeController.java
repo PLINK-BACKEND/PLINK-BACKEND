@@ -19,7 +19,7 @@ public class PostLikeController {
     private final PostLikeService postLikeService;
 
     // 게시글 좋아요 추가 & 취소
-    @PostMapping("{postId}/like")
+    @PostMapping("/{postId}/like")
     public ResponseEntity<LikeResponse> postLike(
             @PathVariable String slug,
             @PathVariable Long postId,

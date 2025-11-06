@@ -13,7 +13,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -25,18 +27,17 @@ public class PostController {
     private final PostService postService;
 
     // 게시글 작성 (POST 요청)
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PostResponse> createPost(
             @PathVariable String slug,
-            HttpSession session,
-            @ModelAttribute PostCreateRequest request) throws IOException {
+            @AuthenticationPrincipal User user,
+            @RequestBody PostCreateRequest request) throws IOException {
 
-        User user = (User) session.getAttribute("loginUser");
         if (user == null) {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
 
-        Post post = postService.createPost(user, request);
+        Post post = postService.createPost(user, request,slug);
         PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

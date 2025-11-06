@@ -58,7 +58,7 @@ public class PollService {
         }
 
         // 중복투표 체크
-        if (pollVoteRepository.existsByPollIdAndVoterId(pollId, voterId)) {
+        if (pollVoteRepository.existsByPollIdAndVoterUserId(pollId, voterId)) {
             throw new IllegalStateException("이미 투표했습니다.");
         }
 

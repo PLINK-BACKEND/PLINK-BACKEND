@@ -6,6 +6,8 @@ import com.plink.backend.auth.dto.SignUpRequest;
 import com.plink.backend.auth.dto.UserResponse;
 import com.plink.backend.auth.service.AuthService;
 import com.plink.backend.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +30,8 @@ public class AuthController {
 
     // 회원 로그인
     @PostMapping("/login")
-    public UserResponse login(@RequestBody LoginRequest request) {
-        return authService.login(request);
+    public UserResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        return authService.login(request, httpRequest);
     }
 
     // 회원 로그아웃

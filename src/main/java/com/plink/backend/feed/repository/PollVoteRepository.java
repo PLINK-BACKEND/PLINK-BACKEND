@@ -4,5 +4,5 @@ import com.plink.backend.feed.entity.PollVote;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PollVoteRepository extends JpaRepository<PollVote, Long> {
-    boolean existsByPollIdAndVoterId(Long pollId, Long voterId);
+    boolean existsByPollIdAndVoterUserId(Long pollId, Long voterId);
 }

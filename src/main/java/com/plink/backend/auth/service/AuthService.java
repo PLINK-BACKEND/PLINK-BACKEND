@@ -7,9 +7,13 @@ import com.plink.backend.auth.dto.UserResponse;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.repository.UserRepository;
 import com.plink.backend.user.role.Role;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.plink.backend.global.exception.CustomException;
@@ -52,7 +56,7 @@ public class AuthService {
 
     // 회원 로그인
     @Transactional
-    public UserResponse login(LoginRequest req) {
+    public UserResponse login(LoginRequest req, HttpServletRequest request) {
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "이메일을 찾을 수 없습니다."));
 
@@ -60,7 +64,20 @@ public class AuthService {
             throw new CustomException(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
         }
 
-        session.setAttribute("user", user);
+        // Spring Security 인증 객체 생성
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+
+        // SecurityContext에 인증 정보 등록
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // 세션에 SecurityContext 저장
+        request.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                SecurityContextHolder.getContext()
+        );
+
+
         return new UserResponse(user);
     }
 

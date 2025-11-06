@@ -37,17 +37,21 @@ public class PostService {
 
     @Transactional
     // 게시글 작성하기
-    public Post createPost(User author, PostCreateRequest request) throws IOException {
+    public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
+        System.out.println("=== PostCreateRequest DEBUG ===");
+        System.out.println("title: " + request.getTitle());
+        System.out.println("postType: " + request.getPostType());
+        System.out.println("tagId: " + request.getTagId());
+        System.out.println("===============================");
 
         // 행사 검증
-        Festival festival = festivalRepository.findById(request.getFestivalId())
-                .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 행사입니다."));
+        Festival festival = festivalRepository.findBySlug(slug)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 축제입니다."));
 
         // 태그 검증
         Tag tag = tagRepository.findById(request.getTagId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
-
 
         // 게시글 타입
         Poll poll = null;

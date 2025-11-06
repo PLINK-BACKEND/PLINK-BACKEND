@@ -41,6 +41,7 @@ public class PostResponse {
                 .content(post.getContent())
                 .author(post.getAuthor().getNickname())
                 .tagName(post.getTag().getTag_name())
+                .postType(post.getPostType().toString())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .imageUrls(post.getImages() == null ? List.of() :

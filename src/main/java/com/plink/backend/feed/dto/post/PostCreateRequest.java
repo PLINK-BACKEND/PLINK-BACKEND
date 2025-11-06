@@ -18,7 +18,6 @@ public class PostCreateRequest {
     private String content;
     private Long tagId;
     private List<MultipartFile> images;
-    private Long festivalId;
     private PollCreateRequest poll;
 
 }

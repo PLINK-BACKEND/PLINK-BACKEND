@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{slug/post")
+@RequestMapping("/{slug}/post")
 public class CommentController {
 
     private final CommentService commentService;
@@ -38,7 +38,7 @@ public class CommentController {
     }
 
     // 댓글 수정
-    @PutMapping("comment/{commentId}")
+    @PutMapping("/comment/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable String slug,
             @PathVariable Long commentId,
@@ -65,7 +65,7 @@ public class CommentController {
 
 
     // 댓글 삭제
-    @DeleteMapping("{comment/{commentId}")
+    @DeleteMapping("/comment/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable String slug,
             @PathVariable Long commentId,

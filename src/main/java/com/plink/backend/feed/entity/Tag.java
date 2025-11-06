@@ -10,11 +10,10 @@ import lombok.Setter;
 @Entity
 
 public class Tag {
-    @Id @GeneratedValue
+    @Id@GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
 
     @Column(unique=true)
     private String tag_name;
-
 
 }

@@ -19,9 +19,6 @@ public class Poll {
 
     private String title;
 
-    @OneToOne(mappedBy = "poll")
-    private Post post;
-
     @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<PollOption> options = new ArrayList<>();
