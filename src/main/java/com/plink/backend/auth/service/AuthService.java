@@ -4,17 +4,21 @@ import com.plink.backend.auth.dto.GuestRequest;
 import com.plink.backend.auth.dto.LoginRequest;
 import com.plink.backend.auth.dto.SignUpRequest;
 import com.plink.backend.auth.dto.UserResponse;
+import com.plink.backend.commonService.S3Service;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.repository.UserRepository;
 import com.plink.backend.user.role.Role;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.plink.backend.global.exception.CustomException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -26,22 +30,38 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final HttpSession session;
+    private final S3Service s3Service;
+
+    @Value("${cloud.aws.s3.base-url}")
+    private String s3BaseUrl;
 
     // 회원가입
-    @Transactional(rollbackFor = CustomException.class)
-    public UserResponse signUp(SignUpRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
+    @Transactional
+    public UserResponse signUp(String email, String nickname, String password, MultipartFile profileImage) throws IOException {
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
-        if (userRepository.existsByNickname(req.getNickname())) {
-            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
+        if (userRepository.existsByNickname(nickname)) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
+        // S3 업로드
+        String imageKey = null;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            imageKey = s3Service.upload(profileImage, "profiles");
+        }
+
+        // S3 url 생성
+        String imageUrl = (imageKey != null)
+                ? s3BaseUrl + "/" + imageKey
+                : "/images/default.png";
+
+
         User user = User.builder()
-                .email(req.getEmail())
-                .nickname(req.getNickname())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .profileImageUrl(req.getProfileImageUrl())
+                .email(email)
+                .nickname(nickname)
+                .password(passwordEncoder.encode(password))
+                .profileImageUrl(imageUrl)
                 .role(Role.USER)
                 .createdAt(LocalDateTime.now())
                 .build();

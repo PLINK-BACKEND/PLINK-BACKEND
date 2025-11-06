@@ -7,8 +7,12 @@ import com.plink.backend.auth.dto.UserResponse;
 import com.plink.backend.auth.service.AuthService;
 import com.plink.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/auth")
@@ -20,11 +24,17 @@ public class AuthController {
     }
 
     // 회원가입
-    @PostMapping("/signup")
-    public ResponseEntity<UserResponse> signUp(@RequestBody SignUpRequest request) {
-        UserResponse userResponse = authService.signUp(request);
-        return ResponseEntity.ok(userResponse);
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> signUp(
+            @RequestPart("email") String email,
+            @RequestPart("nickname") String nickname,
+            @RequestPart("password") String password,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
+    ) throws IOException {
+        UserResponse response = authService.signUp(email, nickname, password, profileImage);
+        return ResponseEntity.ok(response);
     }
+
 
     // 회원 로그인
     @PostMapping("/login")
