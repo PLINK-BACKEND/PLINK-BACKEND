@@ -9,6 +9,7 @@ import com.plink.backend.main.entity.Festival;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Builder
@@ -52,6 +53,11 @@ public class Post {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    private int commentCount;
+
+    @OneToMany(mappedBy = "post",  cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostLike> likes = new ArrayList<>();
+
 
     public void updateTitle(String title) {this.title = title; }
 
@@ -59,8 +65,8 @@ public class Post {
         this.content = content;
     }
 
-    public void changeTag(Tag tag) {
-        this.tag = tag;
-    }
+    public void changeTag(Tag tag) { this.tag = tag; }
+
+    public void updateCommentCount(int count)  { this.commentCount = count; }
 
 }
