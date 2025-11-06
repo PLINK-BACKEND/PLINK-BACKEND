@@ -27,11 +27,11 @@ public class PostController {
     private final PostService postService;
 
     // 게시글 작성 (POST 요청)
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createPost(
             @PathVariable String slug,
             @AuthenticationPrincipal User user,
-            @RequestBody PostCreateRequest request) throws IOException {
+            @ModelAttribute PostCreateRequest request) throws IOException {
 
         if (user == null) {
             throw new IllegalStateException("로그인이 필요합니다.");

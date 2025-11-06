@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
+    @EntityGraph(attributePaths = {"images"})
     Optional<Post> findById(Long id);
 
     // 상세 조회: author, tag, festival, images, comments까지 한 번에 로딩

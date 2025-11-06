@@ -5,6 +5,7 @@ import lombok.*;
 
 @Builder
 @Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,4 +22,6 @@ public class Image {
     @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name="post_id")
     private Post post;
+
+    public String getS3key() { return s3key; }
 }

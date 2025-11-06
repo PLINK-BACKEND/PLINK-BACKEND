@@ -1,5 +1,6 @@
 package com.plink.backend.feed.service;
 
+import com.plink.backend.commonService.S3UploadResult;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.entity.*;
@@ -85,15 +86,18 @@ public class PostService {
         // 이미지 업로드
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             for (MultipartFile file : request.getImages()) {
-                String key = s3Service.upload(file,"posts");
+                S3UploadResult uploadResult = s3Service.upload(file, "posts");
+
                 Image image = Image.builder()
                         .post(post)
-                        .s3key(key)
-                        .originalName(file.getOriginalFilename())
+                        .s3key(uploadResult.getKey())
+                        .originalName(uploadResult.getOriginalFilename())
+                        .image_url(uploadResult.getUrl())
                         .build();
-                imageRepository.save(image);
+                post.getImages().add(image);
             }
         }
+        postRepository.save(post);
         return post;
     }
 
