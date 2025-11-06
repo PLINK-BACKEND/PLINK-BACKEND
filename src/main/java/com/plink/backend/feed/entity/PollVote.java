@@ -1,11 +1,11 @@
 package com.plink.backend.feed.entity;
 
+import com.plink.backend.user.entity.User;
 import jakarta.persistence.*;
-import lombok.Builder;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 @Getter
@@ -27,6 +27,5 @@ public class PollVote {
     private User voter;
 
     private LocalDateTime createdAt = LocalDateTime.now();
-
 
 }

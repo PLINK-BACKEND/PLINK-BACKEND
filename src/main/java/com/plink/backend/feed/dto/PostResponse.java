@@ -27,7 +27,7 @@ public class PostResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<String> imageUrls;           // S3에서 변환된 URL
-    private List<CommentResponseDto> comments; // 댓글 리스트
+    private List<CommentResponse> comments; // 댓글 리스트
 
     // 엔티티 -> DTO 변환 편의 메서드
     public static PostResponse from(Post post) {
@@ -35,9 +35,8 @@ public class PostResponse {
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .author(post.getAuthor().getNickname())     // User 엔티티에 맞게 수정
+                .author(post.getAuthor().getNickname())
                 .tagName(post.getTag().getTag_name())
-                .festivalName(post.getFestival().getName())     // Festival 엔티티에 맞게 수정
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .imageUrls(post.getImages() == null ? List.of() :
@@ -46,7 +45,7 @@ public class PostResponse {
                                 .collect(Collectors.toList()))
                 .comments(post.getComments() == null ? List.of() :
                         post.getComments().stream()
-                                .map(CommentResponseDto::from)
+                                .map(CommentResponse::from)
                                 .collect(Collectors.toList()))
                 .build();
 

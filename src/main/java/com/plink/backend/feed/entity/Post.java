@@ -2,8 +2,8 @@ package com.plink.backend.feed.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-// 회원가입 패키지에 있는 User엔티티 import
-import org.apache.catalina.User;
+
+import com.plink.backend.user.entity.User;
 import org.hibernate.annotations.CreationTimestamp;
 import com.plink.backend.main.entity.Festival;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -30,7 +30,7 @@ public class Post {
 
     @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User author; //추후 추가함
+    private User author;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Comment> comments;

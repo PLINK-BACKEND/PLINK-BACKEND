@@ -1,10 +1,9 @@
 package com.plink.backend.feed.entity;
 
+import com.plink.backend.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.apache.catalina.User;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,7 +22,7 @@ public class Comment {
 
     @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name="user_id", nullable = false)
-    private User author; //추후 로그인 회원가입 완료되면 수정
+    private User author;
 
     @Column(nullable = false)
     private String content;
