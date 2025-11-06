@@ -27,26 +27,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final HttpSession session;
 
-
-    /**
-     * ✅ 회원 로그인
-     */
-    @Transactional
-    public UserResponse login(LoginRequest req) {
-        User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "이메일을 찾을 수 없습니다."));
-
-        if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new CustomException(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
-        }
-
-        session.setAttribute("user", user);
-        return new UserResponse(user);
-    }
-
-    /**
-     * ✅ 회원가입
-     */
+    // 회원가입
     @Transactional(rollbackFor = CustomException.class)
     public UserResponse signUp(SignUpRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {
@@ -69,23 +50,33 @@ public class AuthService {
         return new UserResponse(user);
     }
 
-    /**
-     * ✅ 로그아웃 (세션 무효화)
-     */
+    // 회원 로그인
+    @Transactional
+    public UserResponse login(LoginRequest req) {
+        User user = userRepository.findByEmail(req.getEmail())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "이메일을 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
+        }
+
+        session.setAttribute("user", user);
+        return new UserResponse(user);
+    }
+
+    // 로그아웃(세션 무효화)
     @Transactional
     public void logout() {
         session.invalidate();
     }
 
-    /**
-     * ✅ 게스트 세션 생성 or 기존 게스트 재사용
-     */
+    // 게스트 계정 생성
     @Transactional
     public UserResponse createGuest(GuestRequest req) {
-        // 1️⃣ 랜덤한 게스트 ID 생성
+        // 1️. 랜덤한 게스트 ID 생성
         String guestId = "guest-" + UUID.randomUUID().toString().substring(0, 8);
 
-        // 2️⃣ 닉네임과 이미지가 전달되지 않았다면 기본값 설정
+        // 2️. 닉네임과 이미지가 전달되지 않았다면 기본값 설정
         String nickname = (req.getNickname() != null && !req.getNickname().isBlank())
                 ? req.getNickname()
                 : "게스트_" + guestId.substring(6);
@@ -94,12 +85,12 @@ public class AuthService {
                 ? req.getProfileImageUrl()
                 : "/images/default_guest.png";
 
-        // ✅ 닉네임 중복 체크 추가
+        // 닉네임 중복 체크
         if (userRepository.existsByNickname(nickname)) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         }
 
-        // 3️⃣ User 엔티티 생성
+        // 3️. User 엔티티 생성
         User guest = User.builder()
                 .email(guestId)
                 .nickname(nickname)
@@ -110,7 +101,7 @@ public class AuthService {
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .build();
 
-        // 4️⃣ 저장 및 세션 등록
+        // 4️. 저장 및 세션 등록
         userRepository.save(guest);
         session.setAttribute("guest", guest);
 
@@ -118,10 +109,7 @@ public class AuthService {
     }
 
 
-
-    /**
-     * ✅ 게스트 → 회원 데이터 마이그레이션
-     */
+    // 게스트 -> 회원 데이터 마이그레이션
     @Transactional
     public void migrateGuestToUser(String guestId, User user) {
         userRepository.findByEmail(guestId).ifPresent(guest -> {
