@@ -47,6 +47,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0' //.env 자동으로 인식
+    implementation 'com.mysql:mysql-connector-j:8.0.33'
 }
 
 tasks.named('test') {
