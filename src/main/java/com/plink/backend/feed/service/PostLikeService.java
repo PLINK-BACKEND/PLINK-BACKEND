@@ -1,10 +1,12 @@
 package com.plink.backend.feed.service;
 
+
 import com.plink.backend.feed.dto.LikeResponse;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.feed.entity.PostLike;
 import com.plink.backend.feed.repository.PostLikeRepository;
 import com.plink.backend.feed.repository.PostRepository;
+import com.plink.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

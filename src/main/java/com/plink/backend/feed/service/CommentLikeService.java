@@ -3,9 +3,9 @@ package com.plink.backend.feed.service;
 import com.plink.backend.feed.dto.LikeResponse;
 import com.plink.backend.feed.entity.Comment;
 import com.plink.backend.feed.entity.CommentLike;
-import com.plink.backend.feed.entity.PostLike;
 import com.plink.backend.feed.repository.CommentLikeRepository;
 import com.plink.backend.feed.repository.CommentRepository;
+import com.plink.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,6 @@ public class CommentLikeService {
         return new LikeResponse(liked, likeCount);
     }
 
-    }
 
 }
 

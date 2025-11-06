@@ -1,11 +1,12 @@
 package com.plink.backend.feed.controller;
 
 import com.plink.backend.user.entity.User;
-import com.plink.backend.feed.dto.PostCreateRequest;
-import com.plink.backend.feed.dto.PostResponse;
-import com.plink.backend.feed.dto.PostUpdateRequest;
+import com.plink.backend.feed.dto.post.PostCreateRequest;
+import com.plink.backend.feed.dto.post.PostResponse;
+import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.feed.service.PostService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -28,12 +29,15 @@ public class PostController {
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
             @PathVariable String slug,
-            @AuthenticationPrincipal /* User */ Object author,
+            HttpSession session,
             @ModelAttribute PostCreateRequest request) throws IOException {
 
-        User user = (User) author;
-        Post post = postService.createPost(user, request);
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
 
+        Post post = postService.createPost(user, request);
         PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -45,9 +49,13 @@ public class PostController {
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @AuthenticationPrincipal Object author,
+            HttpSession session,
             @RequestBody PostUpdateRequest request) {
-        User user = (User) author;
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+
         Post updated = postService.updatePost(user, request, postId);
         PostResponse response = PostResponse.from(updated);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -58,8 +66,13 @@ public class PostController {
     public ResponseEntity<Void> deletePost(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @AuthenticationPrincipal Object author) {
-        User user = (User) author;
+            HttpSession session)
+    {
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+        }
+
         postService.deletePost(user, postId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

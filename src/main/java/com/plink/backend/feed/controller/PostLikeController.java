@@ -1,7 +1,9 @@
 package com.plink.backend.feed.controller;
 
+import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.LikeResponse;
 import com.plink.backend.feed.service.PostLikeService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,9 +24,12 @@ public class PostLikeController {
     public ResponseEntity<LikeResponse> postLike(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @AuthenticationPrincipal User userDetails
+            HttpSession session
     ){
-        User user = userDetails.getUser();
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+        }
         LikeResponse response = postLikeService.Like(user, postId);
         return ResponseEntity.ok(response);
     }

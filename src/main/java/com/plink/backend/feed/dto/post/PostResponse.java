@@ -39,9 +39,8 @@ public class PostResponse {
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .author(post.getAuthor().getNickname())     // User 엔티티에 맞게 수정
+                .author(post.getAuthor().getNickname())
                 .tagName(post.getTag().getTag_name())
-                .festivalName(post.getFestival().getName())     // Festival 엔티티에 맞게 수정
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .imageUrls(post.getImages() == null ? List.of() :

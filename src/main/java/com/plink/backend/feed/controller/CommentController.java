@@ -4,6 +4,8 @@ import com.plink.backend.feed.dto.comment.CommentRequest;
 import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.entity.Comment;
 import com.plink.backend.feed.service.CommentService;
+import com.plink.backend.user.entity.User;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +26,14 @@ public class CommentController {
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @AuthenticationPrincipal Object author,
+            HttpSession session,
             @RequestBody CommentRequest request
     ) {
-        User user = (User) author;
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+        }
+
         Comment comment = commentService.createComment(user, request,postId);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommentResponse.from(comment));
     }
@@ -37,10 +43,14 @@ public class CommentController {
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable String slug,
             @PathVariable Long commentId,
-            @AuthenticationPrincipal Object author,
+            HttpSession session,
             @RequestBody CommentRequest request
     ){
-        User user = (User) author;
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+        }
+
         Comment updated = commentService.updateComment(user, request,commentId);
 
         return ResponseEntity.ok(CommentResponse.from(updated));
@@ -60,9 +70,13 @@ public class CommentController {
     public ResponseEntity<Void> deleteComment(
             @PathVariable String slug,
             @PathVariable Long commentId,
-            @AuthenticationPrincipal Object author
+            HttpSession session
     ) {
-        User user = (User) author;
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+        }
+
         commentService.deleteComment(user,commentId);
         return ResponseEntity.noContent().build();
     }

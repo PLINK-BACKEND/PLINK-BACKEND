@@ -4,6 +4,7 @@ import com.plink.backend.feed.dto.comment.CommentRequest;
 import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.entity.Comment;
 import com.plink.backend.feed.entity.Post;
+import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.repository.CommentRepository;
 import com.plink.backend.feed.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +44,11 @@ public class CommentService {
 
         // 작성자만 수정 권한을 가짐
         if (!comment.getAuthor().equals(Author)){
-            throw new IllegalArgumentException("댓글 수정 권한이 없습니다."));
+            throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
         }
 
         comment.updateContent(request.getContent());
         return commentRepository.save(comment);
-
-
 
     }
 
