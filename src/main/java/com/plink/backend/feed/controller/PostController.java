@@ -14,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -70,7 +69,7 @@ public class PostController {
     {
         User user = (User) session.getAttribute("loginUser");
         if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+            throw new IllegalStateException("로그인이 필요합니다.");
         }
 
         postService.deletePost(user, postId);

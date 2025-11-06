@@ -6,7 +6,6 @@ import com.plink.backend.feed.service.PostLikeService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +27,7 @@ public class PostLikeController {
     ){
         User user = (User) session.getAttribute("loginUser");
         if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+            throw new IllegalStateException("로그인이 필요합니다.");
         }
         LikeResponse response = postLikeService.Like(user, postId);
         return ResponseEntity.ok(response);

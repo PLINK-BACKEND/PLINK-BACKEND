@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,7 +30,7 @@ public class CommentController {
     ) {
         User user = (User) session.getAttribute("loginUser");
         if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+            throw new IllegalStateException("로그인이 필요합니다.");
         }
 
         Comment comment = commentService.createComment(user, request,postId);
@@ -48,7 +47,7 @@ public class CommentController {
     ){
         User user = (User) session.getAttribute("loginUser");
         if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+            throw new IllegalStateException("로그인이 필요합니다.");
         }
 
         Comment updated = commentService.updateComment(user, request,commentId);
@@ -74,7 +73,7 @@ public class CommentController {
     ) {
         User user = (User) session.getAttribute("loginUser");
         if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다."); // 또는 CustomException
+            throw new IllegalStateException("로그인이 필요합니다.");
         }
 
         commentService.deleteComment(user,commentId);
