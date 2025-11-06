@@ -1,4 +1,4 @@
-package com.plink.backend.feed.dto;
+package com.plink.backend.feed.dto.comment;
 
 
 import com.plink.backend.feed.entity.Comment;

@@ -1,11 +1,9 @@
 package com.plink.backend.feed.controller;
 
-import com.plink.backend.feed.dto.PostCreateRequest;
-import com.plink.backend.feed.dto.PostResponse;
-import com.plink.backend.feed.dto.PostUpdateRequest;
+import com.plink.backend.feed.dto.post.PostCreateRequest;
+import com.plink.backend.feed.dto.post.PostResponse;
+import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.entity.PostType;
-import com.plink.backend.feed.service.PollService;
 import com.plink.backend.feed.service.PostService;
 import lombok.RequiredArgsConstructor;
 

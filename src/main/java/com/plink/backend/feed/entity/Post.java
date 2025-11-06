@@ -53,20 +53,28 @@ public class Post {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private int commentCount;
+    private int commentCount = 0;
+    private int likeCount = 0;
 
     @OneToMany(mappedBy = "post",  cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> likes = new ArrayList<>();
 
-
     public void updateTitle(String title) {this.title = title; }
-
     public void updateContent(String content) {
         this.content = content;
     }
+    public void updateTag(Tag tag) { this.tag = tag; }
 
-    public void changeTag(Tag tag) { this.tag = tag; }
-
+    // 댓글 수 반환
     public void updateCommentCount(int count)  { this.commentCount = count; }
 
+    // 좋아요 수 증가
+    public void increaseLikeCount() { this.likeCount++;}
+
+    // 좋아요 수 감소
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
 }

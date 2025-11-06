@@ -1,7 +1,7 @@
 package com.plink.backend.feed.service;
 
-import com.plink.backend.feed.dto.CommentRequest;
-import com.plink.backend.feed.dto.CommentResponse;
+import com.plink.backend.feed.dto.comment.CommentRequest;
+import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.entity.Comment;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.feed.repository.CommentRepository;

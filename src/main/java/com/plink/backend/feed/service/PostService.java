@@ -1,16 +1,15 @@
 package com.plink.backend.feed.service;
 
-import com.plink.backend.feed.dto.PostCreateRequest;
-import com.plink.backend.feed.dto.PostResponse;
+import com.plink.backend.feed.dto.post.PostCreateRequest;
+import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.entity.*;
-import com.plink.backend.feed.repository.PollVoteRepository;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
 import com.plink.backend.service.S3Service;
 import com.plink.backend.feed.repository.ImageRepository;
 import com.plink.backend.feed.repository.PostRepository;
 import com.plink.backend.feed.repository.TagRepository;
-import com.plink.backend.feed.dto.PostUpdateRequest;
+import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -118,7 +117,7 @@ public class PostService {
             if (request.getTagId() != null ) {
                 Tag tag = tagRepository.findById(request.getTagId())
                         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
-                post.changeTag(tag);
+                post.updateTag(tag);
             }
 
             return post;

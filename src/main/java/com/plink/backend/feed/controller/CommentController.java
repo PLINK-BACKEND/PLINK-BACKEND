@@ -1,7 +1,7 @@
 package com.plink.backend.feed.controller;
 
-import com.plink.backend.feed.dto.CommentRequest;
-import com.plink.backend.feed.dto.CommentResponse;
+import com.plink.backend.feed.dto.comment.CommentRequest;
+import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.entity.Comment;
 import com.plink.backend.feed.service.CommentService;
 import lombok.RequiredArgsConstructor;

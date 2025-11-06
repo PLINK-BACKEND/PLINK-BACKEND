@@ -1,4 +1,4 @@
-package com.plink.backend.feed.dto;
+package com.plink.backend.feed.dto.post;
 
 import com.plink.backend.feed.entity.Image;
 import com.plink.backend.feed.entity.Post;
