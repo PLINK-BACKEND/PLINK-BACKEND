@@ -91,18 +91,16 @@ public class AuthService {
     }
 
     // 게스트 계정 생성
-    @Transactional
-    public UserResponse createGuest(GuestRequest req) {
-        // 1️. 랜덤한 게스트 ID 생성
+    public UserResponse createGuest(String nickname, MultipartFile profileImage) throws IOException {
         String guestId = "guest-" + UUID.randomUUID().toString().substring(0, 8);
 
-        // 2️. 닉네임과 이미지가 전달되지 않았다면 기본값 설정
-        String nickname = (req.getNickname() != null && !req.getNickname().isBlank())
-                ? req.getNickname()
-                : "게스트_" + guestId.substring(6);
+        // S3 업로드
+        String imageKey = (profileImage != null && !profileImage.isEmpty())
+                ? s3Service.upload(profileImage, "guest-profiles")
+                : null;
 
-        String profileImageUrl = (req.getProfileImageUrl() != null && !req.getProfileImageUrl().isBlank())
-                ? req.getProfileImageUrl()
+        String imageUrl = (imageKey != null)
+                ? s3BaseUrl + "/" + imageKey
                 : "/images/default_guest.png";
 
         // 닉네임 중복 체크
@@ -110,18 +108,18 @@ public class AuthService {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         }
 
-        // 3️. User 엔티티 생성
+        // User 엔티티 생성
         User guest = User.builder()
                 .email(guestId)
                 .nickname(nickname)
-                .password("") // 게스트이므로 비밀번호 없음
-                .profileImageUrl(profileImageUrl)
+                .password("")
+                .profileImageUrl(imageUrl)
                 .role(Role.GUEST)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .build();
 
-        // 4️. 저장 및 세션 등록
+        // 정보 저장 및 세션 등록
         userRepository.save(guest);
         session.setAttribute("guest", guest);
 
