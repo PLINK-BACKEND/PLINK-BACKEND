@@ -10,6 +10,7 @@ import com.plink.backend.user.repository.UserRepository;
 import com.plink.backend.user.role.Role;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,30 +39,35 @@ public class AuthService {
 
     // 회원가입
     @Transactional
-    public UserResponse signUp(String email, String nickname, String password, MultipartFile profileImage) throws IOException {
-        if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
-        if (userRepository.existsByNickname(nickname)) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+    public UserResponse signUp(SignUpRequest request) throws IOException {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
 
-        // S3 업로드
-        String imageKey = null;
-        if (profileImage != null && !profileImage.isEmpty()) {
-            imageKey = s3Service.upload(profileImage, "profiles");
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         }
 
-        // S3 url 생성
-        String imageUrl = (imageKey != null)
-                ? s3BaseUrl + "/" + imageKey
-                : "/images/default.png";
+        String imageUrl = null;
+        // S3 업로드 실패 시에도 서버 터지지 않게 예외 처리
+        try {
+            if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+                String key = s3Service.upload(request.getProfileImage(), "profiles");
+                imageUrl = s3BaseUrl + "/" + key;
+            }
+        } catch (Exception e) {
+            log.error("S3 업로드 실패: {}", e.getMessage());
+            // 이미지 업로드 실패 시 회원가입 중단 (return null or throw custom exception)
+            throw new IllegalStateException("S3 업로드 실패로 회원가입이 중단되었습니다.");
+        }
 
+        // 비밀번호 암호화
+        String encodedPw = passwordEncoder.encode(request.getPassword());
 
         User user = User.builder()
-                .email(email)
-                .nickname(nickname)
-                .password(passwordEncoder.encode(password))
+                .email(request.getEmail())
+                .nickname(request.getNickname())
+                .password(encodedPw)
                 .profileImageUrl(imageUrl)
                 .role(Role.USER)
                 .createdAt(LocalDateTime.now())
@@ -71,7 +78,7 @@ public class AuthService {
     }
 
     // 회원 로그인
-    @Transactional
+    @Transactional(readOnly = true)
     public UserResponse login(LoginRequest req) {
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "이메일을 찾을 수 없습니다."));
@@ -91,6 +98,7 @@ public class AuthService {
     }
 
     // 게스트 계정 생성
+    @Transactional
     public UserResponse createGuest(String nickname, MultipartFile profileImage) throws IOException {
         String guestId = "guest-" + UUID.randomUUID().toString().substring(0, 8);
 

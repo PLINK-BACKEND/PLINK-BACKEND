@@ -26,12 +26,9 @@ public class AuthController {
     // 회원가입
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserResponse> signUp(
-            @RequestPart("email") String email,
-            @RequestPart("nickname") String nickname,
-            @RequestPart("password") String password,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
+            @ModelAttribute SignUpRequest request
     ) throws IOException {
-        UserResponse response = authService.signUp(email, nickname, password, profileImage);
+        UserResponse response = authService.signUp(request);
         return ResponseEntity.ok(response);
     }
 
