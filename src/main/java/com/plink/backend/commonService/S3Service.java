@@ -1,4 +1,4 @@
-package com.plink.backend.service;
+package com.plink.backend.commonService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
