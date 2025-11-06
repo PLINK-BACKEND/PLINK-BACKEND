@@ -46,7 +46,7 @@ public class PostResponse {
                 .updatedAt(post.getUpdatedAt())
                 .imageUrls(post.getImages() == null ? List.of() :
                         post.getImages().stream()
-                                .map(Image::getS3key)
+                                .map(Image::getImage_url)
                                 .collect(Collectors.toList()))
                 .comments(post.getComments() == null ? List.of() :
                         post.getComments().stream()
