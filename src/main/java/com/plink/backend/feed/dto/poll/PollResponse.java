@@ -1,4 +1,4 @@
-package com.plink.backend.feed.dto;
+package com.plink.backend.feed.dto.poll;
 
 import com.plink.backend.feed.entity.Poll;
 import lombok.Builder;
