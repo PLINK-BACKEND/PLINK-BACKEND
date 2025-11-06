@@ -1,5 +1,6 @@
 package com.plink.backend.feed.controller;
 
+import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.PostCreateRequest;
 import com.plink.backend.feed.dto.PostResponse;
 import com.plink.backend.feed.dto.PostUpdateRequest;

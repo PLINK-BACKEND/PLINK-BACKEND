@@ -1,5 +1,7 @@
 package com.plink.backend.feed.service;
 
+import com.plink.backend.user.service.UserService;
+import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.PollCreateRequest;
 import com.plink.backend.feed.dto.PollResponse;
 import com.plink.backend.feed.entity.Poll;
