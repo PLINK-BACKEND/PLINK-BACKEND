@@ -5,7 +5,7 @@ import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.entity.*;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
-import com.plink.backend.service.S3Service;
+import com.plink.backend.commonService.S3Service;
 import com.plink.backend.feed.repository.ImageRepository;
 import com.plink.backend.feed.repository.PostRepository;
 import com.plink.backend.feed.repository.TagRepository;
@@ -162,7 +162,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public Page<PostResponse> getPostList(Pageable pageable) {
         return postRepository.findAllByOrderByCreatedAtAsc(pageable)
-                .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
+                .map(PostResponse::from);  // 엔티티 -> dto 변환
     }
 
 }

@@ -17,6 +17,7 @@ public class CommentResponse {
     private String author;
     private String content;
     private LocalDateTime createdAt;
+    private int likeCount;
 
     public static CommentResponse from(Comment comment) {
         return CommentResponse.builder()
@@ -24,6 +25,7 @@ public class CommentResponse {
                 .content(comment.getContent())
                 .author(comment.getAuthor())
                 .createdAt(comment.getCreatedAt())
+                .likeCount(comment.getLikeCount())
                 .build();
     }
 }
