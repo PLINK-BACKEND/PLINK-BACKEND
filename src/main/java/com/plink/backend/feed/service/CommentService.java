@@ -38,15 +38,14 @@ public class CommentService {
 
     // 댓글 수정하기
     @Transactional
-    public Comment updateComment( User Author, CommentRequest request,Long commentId) {
+    public Comment updateComment( User author, CommentRequest request,Long commentId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
         // 작성자만 수정 권한을 가짐
-        if (!comment.getAuthor().equals(Author)){
-            throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
+        if (!comment.getAuthor().getUserId().equals(author.getUserId())) {
+            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
-
         comment.updateContent(request.getContent());
         return commentRepository.save(comment);
 
@@ -58,7 +57,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
 
-        if (!comment.getAuthor().equals(author)) {
+        if (!comment.getAuthor().getUserId().equals(author.getUserId())) {
             throw new SecurityException("본인만 댓글을 삭제할 수 있습니다.");
         }
 

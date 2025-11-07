@@ -15,8 +15,10 @@ import java.time.LocalDateTime;
 public class CommentResponse {
     private Long id;
     private String author;
+    private String profileImageUrl;
     private String content;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private int likeCount;
 
     public static CommentResponse from(Comment comment) {
@@ -24,7 +26,9 @@ public class CommentResponse {
                 .id(comment.getId())
                 .content(comment.getContent())
                 .author(comment.getAuthor().getNickname())
+                .profileImageUrl(comment.getAuthor().getProfileImageUrl())
                 .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
                 .likeCount(comment.getLikeCount())
                 .build();
     }

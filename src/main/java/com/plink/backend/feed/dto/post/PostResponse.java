@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 // 댓글리스트 제외
 public class PostResponse {
     private Long id;
+    private String postType;
     private String title;
+    private String content;
     private String author;
     private String profileImageUrl;
     private String tagName;
@@ -28,7 +30,9 @@ public class PostResponse {
     public static PostResponse from(Post post) {
         return PostResponse.builder()
                 .id(post.getId())
+                .postType(post.getPostType().toString())
                 .title(post.getTitle())
+                .content(post.getContent())
                 .author(post.getAuthor().getNickname())
                 .profileImageUrl(post.getAuthor().getProfileImageUrl())
                 .tagName(post.getTag().getTag_name())

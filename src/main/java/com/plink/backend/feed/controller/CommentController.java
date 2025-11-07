@@ -9,6 +9,9 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,10 +28,9 @@ public class CommentController {
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable String slug,
             @PathVariable Long postId,
-            HttpSession session,
+            @AuthenticationPrincipal User user,
             @RequestBody CommentRequest request
     ) {
-        User user = (User) session.getAttribute("loginUser");
         if (user == null) {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
@@ -42,13 +44,16 @@ public class CommentController {
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable String slug,
             @PathVariable Long commentId,
-            HttpSession session,
             @RequestBody CommentRequest request
     ){
-        User user = (User) session.getAttribute("loginUser");
-        if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("수정 권한이 없습니다.");
         }
+
+        User user = (User) authentication.getPrincipal();
 
         Comment updated = commentService.updateComment(user, request,commentId);
 
@@ -68,13 +73,14 @@ public class CommentController {
     @DeleteMapping("/comment/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable String slug,
-            @PathVariable Long commentId,
-            HttpSession session
-    ) {
-        User user = (User) session.getAttribute("loginUser");
-        if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
+            @PathVariable Long commentId)
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("삭제 권한이 없습니다.");
         }
+
+        User user = (User) authentication.getPrincipal();
 
         commentService.deleteComment(user,commentId);
         return ResponseEntity.noContent().build();
