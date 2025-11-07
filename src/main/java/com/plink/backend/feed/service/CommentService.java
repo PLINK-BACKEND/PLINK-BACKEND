@@ -33,6 +33,7 @@ public class CommentService {
                 .content(request.getContent())
                 .build();
 
+        post.increaseCommentCount();
         return commentRepository.save(comment);
     }
 
@@ -62,6 +63,7 @@ public class CommentService {
         }
 
         commentRepository.delete(comment);
+        comment.getPost().decreaseCommentCount();
     }
 
 

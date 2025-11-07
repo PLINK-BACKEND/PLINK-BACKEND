@@ -27,8 +27,8 @@ public class PostLikeService {
         boolean liked;
 
         // 이미 좋아요를 한 경우 -> 좋아요 취소
-        if (postLikeRepository.existsByPostAndUser(user,post)) {
-            postLikeRepository.deleteByPostAndUser(user,post);
+        if (postLikeRepository.existsByUserAndPost(user,post)) {
+            postLikeRepository.deleteByUserAndPost(user,post);
             post.decreaseLikeCount();
             liked = false;
         } else{

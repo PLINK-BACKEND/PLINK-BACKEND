@@ -7,7 +7,6 @@ import com.plink.backend.feed.repository.CommentLikeRepository;
 import com.plink.backend.feed.repository.CommentRepository;
 import com.plink.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +26,8 @@ public class CommentLikeService {
         boolean liked;
 
         // 이미 좋아요를 한 경우 -> 좋아요 취소
-        if (commentLikeRepository.existsByCommentAndUser(user,comment)) {
-            commentLikeRepository.deleteByCommentAndUser(user,comment);
+        if (commentLikeRepository.existsByUserAndComment(user,comment)) {
+            commentLikeRepository.deleteByUserAndComment(user,comment);
             comment.decreaseLikeCount();
             liked = false;
         } else{

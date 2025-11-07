@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PostLikeRepository extends JpaRepository<PostLike, Long>{
 
-    boolean existsByPostAndUser(User user, Post post);
-    void deleteByPostAndUser(User user, Post post);
+    boolean existsByUserAndPost(User user, Post post);
+    void deleteByUserAndPost(User user, Post post);
     long countByPost(Post post);
 
 }

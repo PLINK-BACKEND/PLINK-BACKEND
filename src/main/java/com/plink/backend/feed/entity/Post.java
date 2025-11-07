@@ -57,8 +57,7 @@ public class Post {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Formula("(SELECT COUNT(*) FROM comment c WHERE c.post_id = id)")
-    private int commentCount;
+    private int commentCount =0;
     private int likeCount = 0;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -101,6 +100,18 @@ public class Post {
     public void addImage(Image image) {
         images.add(image);
         image.setPost(this);
+    }
+
+    // 댓글 수 증가
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
+    // 댓글 수 감소
+    public void  decreaseCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
     }
 
     // 좋아요 수 증가

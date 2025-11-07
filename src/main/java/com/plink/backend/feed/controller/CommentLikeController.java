@@ -6,6 +6,7 @@ import com.plink.backend.feed.service.CommentLikeService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,10 +23,10 @@ public class CommentLikeController {
     @PostMapping("/{commentId}/like")
     public ResponseEntity<LikeResponse> commentLike(
             @PathVariable String slug,
-            @PathVariable Long commentId,
-            HttpSession session
+            @AuthenticationPrincipal User user,
+            @PathVariable Long commentId
+
     ){
-        User user = (User) session.getAttribute("loginUser");
         if (user == null) {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
