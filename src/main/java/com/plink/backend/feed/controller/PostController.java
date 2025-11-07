@@ -1,13 +1,12 @@
 package com.plink.backend.feed.controller;
 
-import com.plink.backend.feed.dto.post.PostListResponse;
+import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
-import com.plink.backend.feed.dto.post.PostResponse;
+import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.feed.service.PostService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -49,7 +48,7 @@ public class PostController {
 
     // 게시글 수정 (PATCH)
     @PatchMapping("/{postId}")
-    public ResponseEntity<PostResponse> updatePost(
+    public ResponseEntity<PostDetailResponse> updatePost(
             @PathVariable String slug,
             @PathVariable Long postId,
             @ModelAttribute PostUpdateRequest request) {
@@ -62,7 +61,7 @@ public class PostController {
         User user = (User) authentication.getPrincipal();
 
         Post updated = postService.updatePost(user, request, postId);
-        PostResponse response = PostResponse.from(updated);
+        PostDetailResponse response = PostDetailResponse.from(updated);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -84,18 +83,18 @@ public class PostController {
 
     // 게시글 상세 조회 (댓글까지 전부)
     @GetMapping("/{postId}")
-    public ResponseEntity<PostResponse> getPostDetail(
+    public ResponseEntity<PostDetailResponse> getPostDetail(
             @PathVariable String slug, @PathVariable Long postId) {
-        PostResponse response = postService.getPostDetail(postId);
+        PostDetailResponse response = postService.getPostDetail(postId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     // 게시글 전체 조회 (GET)
     @GetMapping
-    public ResponseEntity<Page<PostListResponse>> getPostList(
+    public ResponseEntity<Page<PostResponse>> getPostList(
             @PathVariable String slug,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<PostListResponse> responses = postService.getPostList(pageable);
+        Page<PostResponse> responses = postService.getPostList(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 }

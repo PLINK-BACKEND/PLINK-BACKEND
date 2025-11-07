@@ -2,10 +2,9 @@ package com.plink.backend.feed.service;
 
 import com.plink.backend.commonService.S3UploadResult;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
-import com.plink.backend.feed.dto.post.PostListResponse;
 import com.plink.backend.feed.dto.post.PostResponse;
+import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.entity.*;
-import com.plink.backend.feed.repository.PollVoteRepository;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
 import com.plink.backend.commonService.S3Service;
@@ -162,18 +161,18 @@ public class PostService {
 
     // 게시글 상세 조회 (댓글/이미지까지 모두 포함)
     @Transactional(readOnly = true)
-    public PostResponse getPostDetail(Long postId) {
+    public PostDetailResponse getPostDetail(Long postId) {
         Post post = postRepository.findWithAllById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        return PostResponse.from(post);
+        return PostDetailResponse.from(post);
     }
 
     // 게시글 모두 조회 (최신 글이 가장 밑으로)
     @Transactional(readOnly = true)
-    public Page<PostListResponse> getPostList(Pageable pageable) {
+    public Page<PostResponse> getPostList(Pageable pageable) {
         return postRepository.findAllByOrderByCreatedAtAsc(pageable)
-                .map(PostListResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
+                .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
     }
 
 }
