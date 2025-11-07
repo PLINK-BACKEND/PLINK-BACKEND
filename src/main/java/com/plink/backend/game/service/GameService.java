@@ -7,6 +7,7 @@ import com.plink.backend.game.entity.Game;
 import com.plink.backend.game.entity.GameScore;
 import com.plink.backend.game.repository.GameRepository;
 import com.plink.backend.game.repository.GameScoreRepository;
+import com.plink.backend.game.websocket.GameWebSocketHandler;
 import com.plink.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,7 +23,7 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final GameScoreRepository gameScoreRepository;
-    private final SimpMessagingTemplate messagingTemplate; // 웹소켓 방송
+    private final GameWebSocketHandler gameWebSocketHandler; // 웹소켓 방송
 
     @Transactional
     public void submitScore(String slug, Long gameId, GameScoreRequest request, User user) {
@@ -40,11 +41,9 @@ public class GameService {
 
         gameScoreRepository.save(score);
 
-        // 웹소켓 방송
-        messagingTemplate.convertAndSend(
-                "/topic/" + slug + "/game-clear",
-                request.getNickname() + "님이 게임을 클리어했습니다!"
-        );
+        // slug별 방송
+        String message = request.getNickname() + "님이 " + slug + " 게임을 클리어했습니다!";
+        gameWebSocketHandler.broadcastToSlug(slug, message);
     }
 
     @Transactional(readOnly = true)
