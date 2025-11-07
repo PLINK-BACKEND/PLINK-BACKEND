@@ -38,6 +38,7 @@ public class User {
 
     // 회원이 참여한 행사 리스트
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<UserFestival> festivals = new ArrayList<>();
 
     public boolean isGuestExpired() {
@@ -49,6 +50,9 @@ public class User {
     }
 
     public void addFestival(UserFestival festival) {
+        if (festivals == null) {
+            festivals = new ArrayList<>();
+        }
         festivals.add(festival);
         festival.setUser(this);
     }

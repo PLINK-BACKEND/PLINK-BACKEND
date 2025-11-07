@@ -50,7 +50,7 @@ public class AuthService {
         }
 
         // 행사 내 닉네임 중복 방지
-        if (userFestivalRepository.existsByFestivalSlugAndNickname(slug, request.getNickname())) {
+        if (userFestivalRepository.existsByFestivalSlugAndNickname(request.getSlug(), request.getNickname())) {
             throw new CustomException(HttpStatus.CONFLICT, "이 행사의 닉네임은 이미 사용 중입니다.");
         }
 
