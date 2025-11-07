@@ -8,5 +8,6 @@ import lombok.Setter;
 public class GuestRequest {
     private String nickname;
     private String profileImageUrl;
+    private String slug; // 행사 식별자
 }
 

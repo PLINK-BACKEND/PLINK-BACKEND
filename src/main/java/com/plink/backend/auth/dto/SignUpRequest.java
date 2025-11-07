@@ -10,4 +10,5 @@ public class SignUpRequest {
     private String nickname;
     private String password;
     private MultipartFile profileImage;
+    private String slug; // 행사 식별자
 }
