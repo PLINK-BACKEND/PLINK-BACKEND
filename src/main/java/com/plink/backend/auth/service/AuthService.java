@@ -6,6 +6,8 @@ import com.plink.backend.auth.dto.SignUpRequest;
 import com.plink.backend.auth.dto.UserResponse;
 import com.plink.backend.commonService.S3Service;
 import com.plink.backend.user.entity.User;
+import com.plink.backend.user.entity.UserFestival;
+import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.repository.UserRepository;
 import com.plink.backend.user.role.Role;
 import jakarta.servlet.http.HttpSession;
@@ -30,6 +32,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserFestivalRepository userFestivalRepository;
     private final PasswordEncoder passwordEncoder;
     private final HttpSession session;
     private final S3Service s3Service;
@@ -37,44 +40,55 @@ public class AuthService {
     @Value("${cloud.aws.s3.base-url}")
     private String s3BaseUrl;
 
-    // 회원가입
+    // 회원가입 (User 생성 + UserFestival에 등록)
     @Transactional
     public UserResponse signUp(SignUpRequest request) throws IOException {
+        String slug = request.getSlug();
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
 
-        if (userRepository.existsByNickname(request.getNickname())) {
-            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
+        // 행사 내 닉네임 중복 방지
+        if (userFestivalRepository.existsByFestivalSlugAndNickname(slug, request.getNickname())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이 행사의 닉네임은 이미 사용 중입니다.");
         }
 
+        // 프로필 업로드
         String imageUrl = null;
-        // S3 업로드 실패 시에도 서버 터지지 않게 예외 처리
-        try {
-            if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+        if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+            try {
                 String key = s3Service.upload(request.getProfileImage(), "profiles");
                 imageUrl = s3BaseUrl + "/" + key;
+            } catch (Exception e) {
+                log.error("S3 업로드 실패: {}", e.getMessage());
+                throw new IllegalStateException("S3 업로드 실패로 회원가입이 중단되었습니다.");
             }
-        } catch (Exception e) {
-            log.error("S3 업로드 실패: {}", e.getMessage());
-            // 이미지 업로드 실패 시 회원가입 중단 (return null or throw custom exception)
-            throw new IllegalStateException("S3 업로드 실패로 회원가입이 중단되었습니다.");
         }
 
         // 비밀번호 암호화
         String encodedPw = passwordEncoder.encode(request.getPassword());
 
+        // User 생성
         User user = User.builder()
                 .email(request.getEmail())
-                .nickname(request.getNickname())
                 .password(encodedPw)
                 .profileImageUrl(imageUrl)
                 .role(Role.USER)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        userRepository.save(user);
-        return new UserResponse(user);
+        // UserFestival 생성
+        UserFestival festival = UserFestival.builder()
+                .user(user)
+                .festivalSlug(slug)
+                .nickname(request.getNickname())
+                .joinedAt(LocalDateTime.now())
+                .build();
+
+        user.addFestival(festival); // 양방향 연결
+        userRepository.save(user); // Cascade -> festival도 함께 저장됨
+        return new UserResponse(user, festival);
     }
 
     // 회원 로그인
@@ -88,7 +102,7 @@ public class AuthService {
         }
 
         session.setAttribute("user", user);
-        return new UserResponse(user);
+        return new UserResponse(user, null);
     }
 
     // 로그아웃(세션 무효화)
@@ -99,47 +113,51 @@ public class AuthService {
 
     // 게스트 계정 생성
     @Transactional
-    public UserResponse createGuest(String nickname, MultipartFile profileImage) throws IOException {
+    public UserResponse createGuest(String slug, String nickname, MultipartFile profileImage) throws IOException {
         String guestId = "guest-" + UUID.randomUUID().toString().substring(0, 8);
 
-        // S3 업로드
-        String imageKey = (profileImage != null && !profileImage.isEmpty())
-                ? s3Service.upload(profileImage, "guest-profiles")
-                : null;
-
-        String imageUrl = (imageKey != null)
-                ? s3BaseUrl + "/" + imageKey
-                : "/images/default_guest.png";
-
-        // 닉네임 중복 체크
-        if (userRepository.existsByNickname(nickname)) {
-            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
+        // 행사 내 닉네임 중복 체크
+        if (userFestivalRepository.existsByFestivalSlugAndNickname(slug, nickname)) {
+            throw new CustomException(HttpStatus.CONFLICT, "이 행사의 닉네임은 이미 사용 중입니다.");
         }
 
-        // User 엔티티 생성
+        String imageUrl = null;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String key = s3Service.upload(profileImage, "guest-profiles");
+            imageUrl = s3BaseUrl + "/" + key;
+        } else {
+            imageUrl = "/images/default_guest.png";
+        }
+
         User guest = User.builder()
                 .email(guestId)
-                .nickname(nickname)
-                .password("")
+                .password("") // 게스트는 비밀번호 없음
                 .profileImageUrl(imageUrl)
                 .role(Role.GUEST)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .build();
 
-        // 정보 저장 및 세션 등록
+        // 게스트용 UserFestival 생성
+        UserFestival festival = UserFestival.builder()
+                .user(guest)
+                .festivalSlug(slug)
+                .nickname(nickname)
+                .joinedAt(LocalDateTime.now())
+                .build();
+
+        guest.addFestival(festival);
+
         userRepository.save(guest);
         session.setAttribute("guest", guest);
 
-        return new UserResponse(guest);
+        return new UserResponse(guest, festival);
     }
 
-
-    // 게스트 -> 회원 데이터 마이그레이션
+    // 게스트 -> 회원 데이터 이전 (임시)
     @Transactional
     public void migrateGuestToUser(String guestId, User user) {
         userRepository.findByEmail(guestId).ifPresent(guest -> {
-            // 여기에 게스트 관련 데이터(예: 점수, 피드 등) 이전 로직 추가 가능
             userRepository.delete(guest);
         });
     }
