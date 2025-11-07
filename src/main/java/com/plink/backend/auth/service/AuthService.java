@@ -4,20 +4,26 @@ import com.plink.backend.auth.dto.GuestRequest;
 import com.plink.backend.auth.dto.LoginRequest;
 import com.plink.backend.auth.dto.SignUpRequest;
 import com.plink.backend.auth.dto.UserResponse;
+import com.plink.backend.commonService.S3Service;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.repository.UserRepository;
 import com.plink.backend.user.role.Role;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.plink.backend.global.exception.CustomException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,22 +32,43 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final HttpSession session;
+    private final S3Service s3Service;
+
+    @Value("${cloud.aws.s3.base-url}")
+    private String s3BaseUrl;
 
     // 회원가입
-    @Transactional(rollbackFor = CustomException.class)
-    public UserResponse signUp(SignUpRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
+    @Transactional
+    public UserResponse signUp(SignUpRequest request) throws IOException {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
-        if (userRepository.existsByNickname(req.getNickname())) {
+
+        if (userRepository.existsByNickname(request.getNickname())) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         }
 
+        String imageUrl = null;
+        // S3 업로드 실패 시에도 서버 터지지 않게 예외 처리
+        try {
+            if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+                String key = s3Service.upload(request.getProfileImage(), "profiles");
+                imageUrl = s3BaseUrl + "/" + key;
+            }
+        } catch (Exception e) {
+            log.error("S3 업로드 실패: {}", e.getMessage());
+            // 이미지 업로드 실패 시 회원가입 중단 (return null or throw custom exception)
+            throw new IllegalStateException("S3 업로드 실패로 회원가입이 중단되었습니다.");
+        }
+
+        // 비밀번호 암호화
+        String encodedPw = passwordEncoder.encode(request.getPassword());
+
         User user = User.builder()
-                .email(req.getEmail())
-                .nickname(req.getNickname())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .profileImageUrl(req.getProfileImageUrl())
+                .email(request.getEmail())
+                .nickname(request.getNickname())
+                .password(encodedPw)
+                .profileImageUrl(imageUrl)
                 .role(Role.USER)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -51,7 +78,7 @@ public class AuthService {
     }
 
     // 회원 로그인
-    @Transactional
+    @Transactional(readOnly = true)
     public UserResponse login(LoginRequest req) {
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "이메일을 찾을 수 없습니다."));
@@ -72,17 +99,16 @@ public class AuthService {
 
     // 게스트 계정 생성
     @Transactional
-    public UserResponse createGuest(GuestRequest req) {
-        // 1️. 랜덤한 게스트 ID 생성
+    public UserResponse createGuest(String nickname, MultipartFile profileImage) throws IOException {
         String guestId = "guest-" + UUID.randomUUID().toString().substring(0, 8);
 
-        // 2️. 닉네임과 이미지가 전달되지 않았다면 기본값 설정
-        String nickname = (req.getNickname() != null && !req.getNickname().isBlank())
-                ? req.getNickname()
-                : "게스트_" + guestId.substring(6);
+        // S3 업로드
+        String imageKey = (profileImage != null && !profileImage.isEmpty())
+                ? s3Service.upload(profileImage, "guest-profiles")
+                : null;
 
-        String profileImageUrl = (req.getProfileImageUrl() != null && !req.getProfileImageUrl().isBlank())
-                ? req.getProfileImageUrl()
+        String imageUrl = (imageKey != null)
+                ? s3BaseUrl + "/" + imageKey
                 : "/images/default_guest.png";
 
         // 닉네임 중복 체크
@@ -90,18 +116,18 @@ public class AuthService {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         }
 
-        // 3️. User 엔티티 생성
+        // User 엔티티 생성
         User guest = User.builder()
                 .email(guestId)
                 .nickname(nickname)
-                .password("") // 게스트이므로 비밀번호 없음
-                .profileImageUrl(profileImageUrl)
+                .password("")
+                .profileImageUrl(imageUrl)
                 .role(Role.GUEST)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .build();
 
-        // 4️. 저장 및 세션 등록
+        // 정보 저장 및 세션 등록
         userRepository.save(guest);
         session.setAttribute("guest", guest);
 
