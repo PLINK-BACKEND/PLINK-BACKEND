@@ -1,5 +1,6 @@
 package com.plink.backend.feed.controller;
 
+import com.plink.backend.feed.dto.post.PostListResponse;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
@@ -15,7 +16,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -49,12 +52,14 @@ public class PostController {
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable String slug,
             @PathVariable Long postId,
-            HttpSession session,
-            @RequestBody PostUpdateRequest request) {
-        User user = (User) session.getAttribute("loginUser");
-        if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
+            @ModelAttribute PostUpdateRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("수정 권한이 없습니다.");
         }
+
+        User user = (User) authentication.getPrincipal();
 
         Post updated = postService.updatePost(user, request, postId);
         PostResponse response = PostResponse.from(updated);
@@ -65,14 +70,14 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
             @PathVariable String slug,
-            @PathVariable Long postId,
-            HttpSession session)
+            @PathVariable Long postId)
     {
-        User user = (User) session.getAttribute("loginUser");
-        if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("삭제 권한이 없습니다.");
         }
 
+        User user = (User) authentication.getPrincipal();
         postService.deletePost(user, postId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
@@ -87,10 +92,10 @@ public class PostController {
 
     // 게시글 전체 조회 (GET)
     @GetMapping
-    public ResponseEntity<Page<PostResponse>> getPostList(
+    public ResponseEntity<Page<PostListResponse>> getPostList(
             @PathVariable String slug,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<PostResponse> responses = postService.getPostList(pageable);
+        Page<PostListResponse> responses = postService.getPostList(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 }

@@ -19,13 +19,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {
             "author",
             "tag",
-            "festival",
             "images",
             "comments",
             "comments.author"
     })
     Optional<Post> findWithAllById(Long id);
 
-    // 목록 조회
+    // 목록 조회: 댓글은 필요 없음 → Lazy 그대로 두기
+    @EntityGraph(attributePaths = {"author", "tag", "images"})
     Page<Post> findAllByOrderByCreatedAtAsc(Pageable pageable);
 }

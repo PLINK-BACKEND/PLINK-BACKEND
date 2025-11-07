@@ -6,11 +6,14 @@ import lombok.*;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.main.entity.Festival;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -34,11 +37,11 @@ public class Post {
     @JoinColumn(name = "user_id")
     private User author;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Comment> comments = new ArrayList<>();
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Comment> comments = new HashSet<>();
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Image> images = new ArrayList<>();
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Image> images = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id", nullable = false)
@@ -54,7 +57,8 @@ public class Post {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private int commentCount = 0;
+    @Formula("(SELECT COUNT(*) FROM comment c WHERE c.post_id = id)")
+    private int commentCount;
     private int likeCount = 0;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -71,8 +75,8 @@ public class Post {
         this.author = author;
         this.tag = tag;
         this.festival = festival;
-        this.comments = new ArrayList<>();
-        this.images = new ArrayList<>();
+        this.comments = new HashSet<>();
+        this.images = new  HashSet<>();
         this.likes = new ArrayList<>();
     }
 
@@ -97,11 +101,6 @@ public class Post {
     public void addImage(Image image) {
         images.add(image);
         image.setPost(this);
-    }
-
-    // 댓글 수 갱신
-    public void updateCommentCount(int count) {
-        this.commentCount = count;
     }
 
     // 좋아요 수 증가

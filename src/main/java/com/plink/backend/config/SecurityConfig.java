@@ -2,6 +2,7 @@ package com.plink.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,7 +30,9 @@ public class SecurityConfig {
                                 "/auth/**",        // 로그인, 회원가입, 게스트
                                 "/user/info",     // 로그인한 유저 조회용
                                 "/error"           // 오류 페이지 등등
+
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/{slug}/post", "/{slug}/post/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

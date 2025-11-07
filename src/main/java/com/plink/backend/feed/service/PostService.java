@@ -2,6 +2,7 @@ package com.plink.backend.feed.service;
 
 import com.plink.backend.commonService.S3UploadResult;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
+import com.plink.backend.feed.dto.post.PostListResponse;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.entity.*;
 import com.plink.backend.feed.repository.PollVoteRepository;
@@ -108,8 +109,8 @@ public class PostService {
                     .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
             // 작성자만 수정 권한을 가짐
-            if (!post.getAuthor().equals(author)){
-                throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
+            if (!post.getAuthor().getUserId().equals(author.getUserId())) {
+                throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
             }
 
             // 제목 수정 (값이 들어온 경우에만)
@@ -139,9 +140,10 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
         // 작성자만 삭제 권한을 가짐
-        if (!post.getAuthor().equals(author)){
+        if (!post.getAuthor().getUserId().equals(author.getUserId())) {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
+
 
         // 이미지 삭제
         if (post.getImages() != null) {
@@ -169,9 +171,9 @@ public class PostService {
 
     // 게시글 모두 조회 (최신 글이 가장 밑으로)
     @Transactional(readOnly = true)
-    public Page<PostResponse> getPostList(Pageable pageable) {
+    public Page<PostListResponse> getPostList(Pageable pageable) {
         return postRepository.findAllByOrderByCreatedAtAsc(pageable)
-                .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
+                .map(PostListResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
     }
 
 }

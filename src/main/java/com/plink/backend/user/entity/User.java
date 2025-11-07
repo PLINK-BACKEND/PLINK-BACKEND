@@ -10,6 +10,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @Entity
 @Table(name = "users")
@@ -72,6 +75,5 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() { return true; }
-
 
 }
