@@ -1,7 +1,9 @@
 package com.plink.backend.feed.dto.post;
 
 import com.plink.backend.feed.dto.comment.CommentResponse;
+import com.plink.backend.feed.dto.poll.PollResponse;
 import com.plink.backend.feed.entity.Image;
+import com.plink.backend.feed.entity.Poll;
 import com.plink.backend.feed.entity.Post;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +34,7 @@ public class PostDetailResponse {
     private List<CommentResponse> comments; // 댓글 리스트
     private int commentCount;
     private int likeCount;
+    private PollResponse poll;
 
     // 엔티티 -> DTO 변환 편의 메서드
     // 게시글 상세보기
@@ -56,6 +59,7 @@ public class PostDetailResponse {
                                 .collect(Collectors.toList()))
                 .commentCount(post.getCommentCount())
                 .likeCount(post.getLikeCount())
+                .poll(post.getPoll() == null ? null : PollResponse.from(post.getPoll(), null))
                 .build();
 
     }

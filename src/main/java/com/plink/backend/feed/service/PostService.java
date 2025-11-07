@@ -40,12 +40,6 @@ public class PostService {
     // 게시글 작성하기
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
-        System.out.println("=== PostCreateRequest DEBUG ===");
-        System.out.println("title: " + request.getTitle());
-        System.out.println("postType: " + request.getPostType());
-        System.out.println("tagId: " + request.getTagId());
-        System.out.println("===============================");
-
         // 행사 검증
         Festival festival = festivalRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 축제입니다."));
@@ -54,10 +48,22 @@ public class PostService {
         Tag tag = tagRepository.findById(request.getTagId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
 
-        // 게시글 타입
+        // 게시글 생성
+        Post post = Post.builder()
+                .author(author)
+                .title(request.getTitle())
+                .content(request.getContent())
+                .tag(tag)
+                .festival(festival)
+                .postType(request.getPostType())
+                .build();
+
+        // 앙케이트
         Poll poll = null;
         if (request.getPostType() == PostType.POLL) {
             poll = pollService.createPoll(author,request.getPoll()); // 앙케이트는 따로 처리
+            post.setPoll(poll);
+            poll.setPost(post);
         }
 
         // 이미지 개수 검증
@@ -70,18 +76,6 @@ public class PostService {
                 (request.getContent() == null || request.getContent().isBlank())) {
             throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
         }
-
-
-        // 게시글 생성
-        Post post = Post.builder()
-                .author(author)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .tag(tag)
-                .festival(festival)
-                .postType(request.getPostType())
-                .build();
-        postRepository.save(post);
 
         // 이미지 업로드
         if (request.getImages() != null && !request.getImages().isEmpty()) {

@@ -19,6 +19,10 @@ public class Poll {
 
     private String title;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
+
     @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<PollOption> options = new ArrayList<>();
@@ -27,4 +31,7 @@ public class Poll {
         options.add(option);
         option.setPoll(this);
     }
+
+    public void setPost(Post post) { this.post = post; }
+
 }

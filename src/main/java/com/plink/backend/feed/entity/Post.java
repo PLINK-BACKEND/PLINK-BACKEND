@@ -51,6 +51,9 @@ public class Post {
     @JoinColumn(name = "festival_id", nullable = false)
     private Festival festival;
 
+    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    Poll poll;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -94,6 +97,14 @@ public class Post {
     // 태그 수정
     public void updateTag(Tag tag) {
         this.tag = tag;
+    }
+
+    // 앙케이트
+    public void setPoll(Poll poll) {
+        this.poll = poll;
+        if(poll.getPost() != this){
+            poll.setPost(this);
+        }
     }
 
     // 이미지 추가
