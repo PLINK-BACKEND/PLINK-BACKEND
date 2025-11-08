@@ -5,6 +5,7 @@ import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.entity.*;
+import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
 import com.plink.backend.commonService.S3Service;
@@ -13,10 +14,13 @@ import com.plink.backend.feed.repository.PostRepository;
 import com.plink.backend.feed.repository.TagRepository;
 import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.user.entity.User;
+import com.plink.backend.user.entity.UserFestival;
+import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +37,7 @@ public class PostService {
     private final ImageRepository imageRepository;
     private final S3Service s3Service;
     private final FestivalRepository festivalRepository;
+    private final UserFestivalRepository userFestivalRepository;
     private final PollService pollService;
     private final UserService userService;
 
@@ -40,11 +45,6 @@ public class PostService {
     // 게시글 작성하기
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
-        System.out.println("=== PostCreateRequest DEBUG ===");
-        System.out.println("title: " + request.getTitle());
-        System.out.println("postType: " + request.getPostType());
-        System.out.println("tagId: " + request.getTagId());
-        System.out.println("===============================");
 
         // 행사 검증
         Festival festival = festivalRepository.findBySlug(slug)
@@ -71,10 +71,13 @@ public class PostService {
             throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
         }
 
+        UserFestival userFestival = userFestivalRepository
+                .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
 
         // 게시글 생성
         Post post = Post.builder()
-                .author(author)
+                .author(userFestival)
                 .title(request.getTitle())
                 .content(request.getContent())
                 .tag(tag)
@@ -108,7 +111,7 @@ public class PostService {
                     .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
             // 작성자만 수정 권한을 가짐
-            if (!post.getAuthor().getUserId().equals(author.getUserId())) {
+            if (!post.getAuthor().getUser().getUserId().equals(author.getUserId())) {
                 throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
             }
 
@@ -139,7 +142,7 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
         // 작성자만 삭제 권한을 가짐
-        if (!post.getAuthor().getUserId().equals(author.getUserId())) {
+        if (!post.getAuthor().getUser().getUserId().equals(author.getUserId())) {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
 

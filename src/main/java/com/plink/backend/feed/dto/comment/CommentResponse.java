@@ -26,7 +26,7 @@ public class CommentResponse {
                 .id(comment.getId())
                 .content(comment.getContent())
                 .author(comment.getAuthor().getNickname())
-                .profileImageUrl(comment.getAuthor().getProfileImageUrl())
+                .profileImageUrl(comment.getAuthor().getUser().getProfileImageUrl())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .likeCount(comment.getLikeCount())

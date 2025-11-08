@@ -1,5 +1,6 @@
 package com.plink.backend.auth.service;
 
+import com.plink.backend.commonService.S3UploadResult;
 import com.plink.backend.auth.dto.GuestRequest;
 import com.plink.backend.auth.dto.LoginRequest;
 import com.plink.backend.auth.dto.SignUpRequest;
@@ -27,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -62,10 +64,18 @@ public class AuthService {
         String imageUrl = null;
         if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
             try {
-                String key = s3Service.upload(request.getProfileImage(), "profiles");
-                imageUrl = s3BaseUrl + "/" + key;
+                S3UploadResult uploadResult = s3Service.upload(request.getProfileImage(), "profiles");
+
+                // S3uploadResult 객체에 URL 필드가 포함되어 있으면 그대로 사용
+                if (uploadResult.getUrl() != null) {
+                    imageUrl = uploadResult.getUrl();
+                } else {
+                    // URL 필드가 없을 경우 직접 구성
+                    imageUrl = s3BaseUrl + "/" + uploadResult.getKey();
+                }
+
             } catch (Exception e) {
-                log.error("S3 업로드 실패: {}", e.getMessage());
+                log.error("S3 업로드 실패: {}", e.getMessage(), e);
                 throw new IllegalStateException("S3 업로드 실패로 회원가입이 중단되었습니다.");
             }
         }
@@ -117,7 +127,10 @@ public class AuthService {
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 SecurityContextHolder.getContext());
 
-        return new UserResponse(user);
+        List<UserFestival> festivals = userFestivalRepository.findByUser_UserId(user.getUserId());
+        UserFestival festival = festivals.isEmpty() ? null : festivals.get(0);
+
+        return new UserResponse(user, festival);
     }
 
     // 로그아웃(세션 무효화)
@@ -136,10 +149,24 @@ public class AuthService {
             throw new CustomException(HttpStatus.CONFLICT, "이 행사의 닉네임은 이미 사용 중입니다.");
         }
 
-        String imageUrl = null;
+        String imageUrl;
+
         if (profileImage != null && !profileImage.isEmpty()) {
-            String key = s3Service.upload(profileImage, "guest-profiles");
-            imageUrl = s3BaseUrl + "/" + key;
+            try {
+
+                S3UploadResult uploadResult = s3Service.upload(profileImage, "guest-profiles");
+
+                // uploadResult 안에 url 필드가 있으면 그대로 사용, 없으면 s3BaseUrl 조합
+                if (uploadResult.getUrl() != null) {
+                    imageUrl = uploadResult.getUrl();
+                } else {
+                    imageUrl = s3BaseUrl + "/" + uploadResult.getKey();
+                }
+
+            } catch (Exception e) {
+                log.error("S3 업로드 실패: {}", e.getMessage(), e);
+                throw new IllegalStateException("게스트 프로필 이미지 업로드 중 오류가 발생했습니다.");
+            }
         } else {
             imageUrl = "/images/default_guest.png";
         }

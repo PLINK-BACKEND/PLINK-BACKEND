@@ -1,5 +1,6 @@
 package com.plink.backend.feed.entity;
 
+import com.plink.backend.user.entity.UserFestival;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,8 +35,8 @@ public class Post {
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User author;
+    @JoinColumn(name = "user_festival_id", nullable = false)
+    private UserFestival author;
 
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Comment> comments = new HashSet<>();
@@ -67,7 +68,7 @@ public class Post {
 
     @Builder
     public Post(PostType postType, String title, String content,
-                User author, Tag tag, Festival festival) {
+                UserFestival author, Tag tag, Festival festival) {
         this.postType = postType;
         this.title = title;
         this.content = content;

@@ -1,6 +1,7 @@
 package com.plink.backend.feed.entity;
 
 import com.plink.backend.user.entity.User;
+import com.plink.backend.user.entity.UserFestival;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,13 +21,13 @@ public class Comment {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_festival_id", nullable = false)
+    private UserFestival author;
+
     @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
-
-    @ManyToOne(fetch= FetchType.LAZY)
-    @JoinColumn(name="user_id", nullable = false)
-    private User author;
 
     @Column(nullable = false)
     private String content;
