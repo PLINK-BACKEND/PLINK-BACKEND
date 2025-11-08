@@ -16,11 +16,9 @@ import java.nio.charset.StandardCharsets;
 public class QRCodeUtil {
 
     public byte[] generateQRCode(String content) throws WriterException, IOException {
-        // ✅ URL 내 공백만 안전하게 인코딩하고, 전체 구조는 그대로 유지
-        String safeContent = content.replace(" ", "%20");
-
+        // ✅ 수정 없음: URL을 그대로 QR에 사용 (이미 인코딩 완료 상태)
         QRCodeWriter writer = new QRCodeWriter();
-        BitMatrix matrix = writer.encode(safeContent, BarcodeFormat.QR_CODE, 300, 300);
+        BitMatrix matrix = writer.encode(content.trim(), BarcodeFormat.QR_CODE, 300, 300);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MatrixToImageWriter.writeToStream(matrix, "PNG", outputStream);
