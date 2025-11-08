@@ -16,6 +16,7 @@ public class MypageService {
 
     private final PostRepository postRepository;
 
+    // 내가 쓴 글 보기
     @Transactional(readOnly = true)
     public List<PostResponse> getMyPosts(Long userId) {
         List<Post> posts = postRepository.findByAuthor_User_UserId(userId);
@@ -23,5 +24,9 @@ public class MypageService {
                 .map(PostResponse::from)
                 .toList();
     }
+
+    // 내가 좋아요 누른 글 보기
+
+
 }
 

@@ -44,7 +44,6 @@ public class PostService {
 
     @Transactional
     // 게시글 작성하기
-
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
         // 행사 검증
