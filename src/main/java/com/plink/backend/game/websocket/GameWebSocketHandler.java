@@ -68,7 +68,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
-
+    // 테스트용 로그 (웹소켓 빈이 생성됐는지 나타내주는 것, 추후에 제거 요망!)
     public GameWebSocketHandler() {
         System.out.println("✅ GameWebSocketHandler bean created");
     }
