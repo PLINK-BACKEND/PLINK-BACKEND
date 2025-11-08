@@ -16,4 +16,5 @@ public class Tag {
     @Column(unique=true)
     private String tag_name;
 
+
 }

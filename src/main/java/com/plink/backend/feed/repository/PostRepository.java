@@ -1,12 +1,14 @@
 package com.plink.backend.feed.repository;
 
 import com.plink.backend.feed.entity.Post;
+import com.plink.backend.feed.entity.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -14,6 +16,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @EntityGraph(attributePaths = {"images"})
     Optional<Post> findById(Long id);
+
+    // 게시판 분리
+    Page<Post> findAllByTagCreatedAtAsc(Tag tag, Pageable pageable);
 
     // 상세 조회: author, tag, festival, images, comments까지 한 번에 로딩
     @EntityGraph(attributePaths = {

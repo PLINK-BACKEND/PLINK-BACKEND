@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 
 @Service
@@ -168,5 +169,9 @@ public class PostService {
         return postRepository.findAllByOrderByCreatedAtAsc(pageable)
                 .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
     }
+
+    // 게시판 별로 게시글 조회
+    public Page<PostResponse> getPostListByTag(Pageable pageable, Long authorId) {}
+
 
 }
