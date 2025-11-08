@@ -9,8 +9,12 @@ import com.plink.backend.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/auth")
@@ -22,10 +26,10 @@ public class AuthController {
     }
 
     // 회원가입
-    @PostMapping("/signup")
-    public ResponseEntity<UserResponse> signUp(@RequestBody SignUpRequest request) {
-        UserResponse userResponse = authService.signUp(request);
-        return ResponseEntity.ok(userResponse);
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> signUp(@ModelAttribute SignUpRequest request) throws IOException {
+        UserResponse response = authService.signUp(request);
+        return ResponseEntity.ok(response);
     }
 
     // 회원 로그인
@@ -41,8 +45,14 @@ public class AuthController {
     }
 
     // 게스트 세션 생성
-    @PostMapping("/guest")
-    public UserResponse guest(@RequestBody GuestRequest guestRequest) {
-        return authService.createGuest(guestRequest);
+    @PostMapping(value = "/guest", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> guestLogin(
+            @RequestPart("slug") String slug,
+            @RequestPart("nickname") String nickname,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
+    ) throws IOException {
+        UserResponse guest = authService.createGuest(slug, nickname, profileImage);
+        return ResponseEntity.ok(guest);
     }
+
 }
