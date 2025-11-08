@@ -48,6 +48,10 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0' //.env 자동으로 인식
     implementation 'com.mysql:mysql-connector-j:8.0.33'
+
+    // ZXing 라이브러리 (QR 코드 생성용)
+    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'com.google.zxing:javase:3.5.3'
 }
 
 tasks.named('test') {

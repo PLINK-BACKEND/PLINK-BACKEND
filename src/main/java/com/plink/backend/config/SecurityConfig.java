@@ -29,7 +29,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**",        // 로그인, 회원가입, 게스트
                                 "/user/info",     // 로그인한 유저 조회용
-                                "/error"           // 오류 페이지 등등
+                                "/ws/**",         // 웹소켓 엔드포인트
+                                "/error",           // 오류 페이지 등등
+                                "/*/games/**"
+                                "/error",          // 오류 페이지 등등
+                                "/fourcuts/**"
 
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**").permitAll()

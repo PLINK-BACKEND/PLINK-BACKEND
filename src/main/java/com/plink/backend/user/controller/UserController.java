@@ -5,8 +5,6 @@ import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
-import com.plink.backend.user.role.Role;
-import com.plink.backend.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
