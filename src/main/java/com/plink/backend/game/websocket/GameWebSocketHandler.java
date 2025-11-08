@@ -68,4 +68,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    public GameWebSocketHandler() {
+        System.out.println("✅ GameWebSocketHandler bean created");
+    }
 }
