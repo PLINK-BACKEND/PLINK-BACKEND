@@ -10,6 +10,5 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PollCreateRequest {
-    private String question;
     private List<String> options;
 }

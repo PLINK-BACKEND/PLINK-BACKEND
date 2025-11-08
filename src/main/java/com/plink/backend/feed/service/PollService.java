@@ -28,7 +28,6 @@ public class PollService {
 
         // 투표 생성
         Poll poll = Poll.builder()
-                .title(request.getQuestion())
                 .build();
 
         // 옵션 생성

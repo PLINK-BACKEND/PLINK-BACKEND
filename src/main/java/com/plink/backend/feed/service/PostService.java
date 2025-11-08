@@ -185,22 +185,24 @@ public class PostService {
 
     }
 
-    // 게시글 모두 조회 (최신 글이 가장 밑으로)
-    @Transactional(readOnly = true)
-    public Page<PostResponse> getPostList(Pageable pageable) {
-        return postRepository.findAllByOrderByCreatedAtAsc(pageable)
-                .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
-    }
 
     @Transactional
     // 게시판 별로 게시글 조회
     public Page<PostResponse> getPostListByTag(Pageable pageable, Long tagId) {
 
-        Tag tag = tagRepository.findById(tagId)
-                .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 게시판입니다."));
 
-        // 2. 태그별 게시글 조회
-        Page<Post> posts = postRepository.findAllByTagOrderByCreatedAtAsc(tag, pageable);
+        Page<Post> posts;
+
+        if (tagId == null) {
+
+            posts = postRepository.findAllByOrderByCreatedAtAsc(pageable);
+        } else {
+
+            Tag tag = tagRepository.findById(tagId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시판입니다."));
+
+            posts = postRepository.findAllByTag_IdOrderByCreatedAtAsc(tagId,pageable);
+        }
 
         // 3. 엔티티 → DTO 변환
         return posts.map(PostResponse::from);

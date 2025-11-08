@@ -7,6 +7,7 @@ import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.feed.service.PostService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -19,12 +20,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{slug}/post")
+@RequestMapping("/{slug}/posts")
 public class PostController {
     private final PostService postService;
 
@@ -91,23 +94,25 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    // 게시글 전체 조회 (GET)
-    @GetMapping
-    public ResponseEntity<Page<PostResponse>> getPostList(
-            @PathVariable String slug,
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<PostResponse> responses = postService.getPostList(pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
-    }
 
-    // 게시판별로 전체 조회
-    @GetMapping("/board/{tagId}")
+
+    // 게시판별 전체 조회
+    @GetMapping
     public ResponseEntity<Page<PostResponse>> getPostListByTag(
             @PathVariable String slug,
-            @PathVariable Long tagId,
-            @PageableDefault(size = 20) Pageable pageable){
-        Page<PostResponse> responses = postService.getPostListByTag(pageable,tagId);
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
-    }
+            @RequestParam(required = false) String tagId,
+            @PageableDefault(size = 20) Pageable pageable) {
 
+        Long parsedId = null;
+        if (tagId != null) {
+            // Tomcat이 넘기는 버그 방지
+            String cleaned = tagId.replaceAll(".*,", ""); // 마지막 숫자만 남기기
+            try {
+                parsedId = Long.parseLong(cleaned.trim());
+            } catch (NumberFormatException ignored) {}
+        }
+
+        Page<PostResponse> responses = postService.getPostListByTag(pageable, parsedId);
+        return ResponseEntity.ok(responses);
+    }
 }
