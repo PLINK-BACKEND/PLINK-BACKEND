@@ -1,5 +1,6 @@
 package com.plink.backend.mypage.controller;
 
+import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.entity.Post;
@@ -37,6 +38,15 @@ public class MypageController {
             @AuthenticationPrincipal User user
     ) {
         List<PostResponse> response = mypageService.getLikedPosts(user.getUserId());
+        return ResponseEntity.ok(response);
+    }
+
+    // 내가 작성한 댓글 보기
+    @GetMapping("/comments")
+    public ResponseEntity<List<CommentResponse>> getMyComments(
+            @AuthenticationPrincipal User user
+    ) {
+        List<CommentResponse> response = mypageService.getMyComments(user.getUserId());
         return ResponseEntity.ok(response);
     }
 

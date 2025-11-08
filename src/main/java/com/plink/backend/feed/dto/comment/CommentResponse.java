@@ -20,6 +20,8 @@ public class CommentResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int likeCount;
+    private String postTitle;
+    private Long postId;
 
     public static CommentResponse from(Comment comment) {
         return CommentResponse.builder()
@@ -30,6 +32,8 @@ public class CommentResponse {
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .likeCount(comment.getLikeCount())
+                .postTitle(comment.getPost().getTitle())
+                .postId(comment.getPost().getId())
                 .build();
     }
 }
