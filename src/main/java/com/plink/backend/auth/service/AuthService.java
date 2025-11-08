@@ -1,5 +1,7 @@
 package com.plink.backend.auth.service;
 
+import com.plink.backend.commonService.S3UploadResult;
+import com.plink.backend.auth.dto.GuestRequest;
 import com.plink.backend.auth.dto.LoginRequest;
 import com.plink.backend.auth.dto.SignUpRequest;
 import com.plink.backend.auth.dto.UserResponse;
@@ -9,11 +11,15 @@ import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.repository.UserRepository;
 import com.plink.backend.user.role.Role;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.plink.backend.global.exception.CustomException;
@@ -22,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -57,10 +64,18 @@ public class AuthService {
         String imageUrl = null;
         if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
             try {
-                String key = s3Service.upload(request.getProfileImage(), "profiles");
-                imageUrl = s3BaseUrl + "/" + key;
+                S3UploadResult uploadResult = s3Service.upload(request.getProfileImage(), "profiles");
+
+                // S3uploadResult 객체에 URL 필드가 포함되어 있으면 그대로 사용
+                if (uploadResult.getUrl() != null) {
+                    imageUrl = uploadResult.getUrl();
+                } else {
+                    // URL 필드가 없을 경우 직접 구성
+                    imageUrl = s3BaseUrl + "/" + uploadResult.getKey();
+                }
+
             } catch (Exception e) {
-                log.error("S3 업로드 실패: {}", e.getMessage());
+                log.error("S3 업로드 실패: {}", e.getMessage(), e);
                 throw new IllegalStateException("S3 업로드 실패로 회원가입이 중단되었습니다.");
             }
         }
@@ -91,8 +106,8 @@ public class AuthService {
     }
 
     // 회원 로그인
-    @Transactional(readOnly = true)
-    public UserResponse login(LoginRequest req) {
+    @Transactional
+    public UserResponse login(LoginRequest req, HttpServletRequest request) {
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "이메일을 찾을 수 없습니다."));
 
@@ -100,8 +115,22 @@ public class AuthService {
             throw new CustomException(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
         }
 
-        session.setAttribute("user", user);
-        return new UserResponse(user, null);
+        // Spring Security 인증 객체 생성
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
+                user.getAuthorities());
+
+        // SecurityContext에 인증 정보 등록
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // 세션에 SecurityContext 저장
+        request.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                SecurityContextHolder.getContext());
+
+        List<UserFestival> festivals = userFestivalRepository.findByUser_UserId(user.getUserId());
+        UserFestival festival = festivals.isEmpty() ? null : festivals.get(0);
+
+        return new UserResponse(user, festival);
     }
 
     // 로그아웃(세션 무효화)
@@ -120,10 +149,24 @@ public class AuthService {
             throw new CustomException(HttpStatus.CONFLICT, "이 행사의 닉네임은 이미 사용 중입니다.");
         }
 
-        String imageUrl = null;
+        String imageUrl;
+
         if (profileImage != null && !profileImage.isEmpty()) {
-            String key = s3Service.upload(profileImage, "guest-profiles");
-            imageUrl = s3BaseUrl + "/" + key;
+            try {
+
+                S3UploadResult uploadResult = s3Service.upload(profileImage, "guest-profiles");
+
+                // uploadResult 안에 url 필드가 있으면 그대로 사용, 없으면 s3BaseUrl 조합
+                if (uploadResult.getUrl() != null) {
+                    imageUrl = uploadResult.getUrl();
+                } else {
+                    imageUrl = s3BaseUrl + "/" + uploadResult.getKey();
+                }
+
+            } catch (Exception e) {
+                log.error("S3 업로드 실패: {}", e.getMessage(), e);
+                throw new IllegalStateException("게스트 프로필 이미지 업로드 중 오류가 발생했습니다.");
+            }
         } else {
             imageUrl = "/images/default_guest.png";
         }
