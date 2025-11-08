@@ -58,7 +58,10 @@ public class Post {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Column(name = "comment_count", nullable = false)
     private int commentCount =0;
+
+    @Column(name = "like_count", nullable = false)
     private int likeCount = 0;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -105,7 +108,8 @@ public class Post {
 
     // 댓글 수 증가
     public void increaseCommentCount() {
-        this.commentCount++;
+            this.commentCount = this.commentCount + 1;
+
     }
 
     // 댓글 수 감소
