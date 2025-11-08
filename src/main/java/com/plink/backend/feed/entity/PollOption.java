@@ -25,6 +25,14 @@ public class PollOption {
     @Column(nullable = false)
     private int voteCount = 0;
 
+    public void increaseVoteCount() {
+        this.voteCount++;
+    }
+
+    public void decreaseVoteCount() {
+        if (this.voteCount > 0) this.voteCount--;
+    }
+
     void setPoll(Poll poll) { this.poll = poll; }
 
 }

@@ -17,7 +17,9 @@ public class Poll {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
 
     @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -27,4 +29,7 @@ public class Poll {
         options.add(option);
         option.setPoll(this);
     }
+
+    public void setPost(Post post) { this.post = post; }
+
 }

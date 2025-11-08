@@ -1,5 +1,6 @@
 package com.plink.backend.feed.service;
 
+import com.plink.backend.feed.entity.PollVote;
 import com.plink.backend.user.service.UserService;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.poll.PollCreateRequest;
@@ -27,7 +28,6 @@ public class PollService {
 
         // 투표 생성
         Poll poll = Poll.builder()
-                .title(request.getQuestion())
                 .build();
 
         // 옵션 생성
@@ -50,6 +50,7 @@ public class PollService {
         Poll poll = pollRepository.findById(pollId)
                 .orElseThrow(() -> new IllegalArgumentException("투표를 찾을 수 없습니다."));
 
+
         PollOption option = pollOptionRepository.findById(optionId)
                 .orElseThrow(() -> new IllegalArgumentException("선택지를 찾을 수 없습니다."));
 
@@ -57,20 +58,43 @@ public class PollService {
             throw new IllegalArgumentException("선택지와 투표가 일치하지 않습니다.");
         }
 
+        User voter = userService.getById(voterId);
+
         // 중복투표 체크
-        if (pollVoteRepository.existsByPollIdAndVoterUserId(pollId, voterId)) {
+        if (pollVoteRepository.existsByPollAndVoter(poll, voter)) {
             throw new IllegalStateException("이미 투표했습니다.");
         }
 
-        User voter = userService.getById(voterId);
-
         // 집계
-        option.setVoteCount(option.getVoteCount() + 1);
+        option.increaseVoteCount();
+
+        PollVote vote = PollVote.builder()
+                .poll(poll)
+                .voter(voter)
+                .option(option)
+                .build();
+
 
         // 저장
-        pollOptionRepository.save(option);
+        pollVoteRepository.save(vote);
 
-        return PollResponse.from(poll, optionId);
+
+        Long selectedOptionId = option.getId();
+
+        return PollResponse.from(poll, selectedOptionId);
+    }
+
+    @Transactional(readOnly = true)
+    public PollResponse getPollResponse(Poll poll, User user) {
+        Long selectedOptionId = null;
+
+        if (user != null) {
+            selectedOptionId = pollVoteRepository.findByPollAndVoter(poll, user)
+                    .map(vote -> vote.getOption().getId())
+                    .orElse(null);
+        }
+
+        return PollResponse.from(poll, selectedOptionId);
     }
 
 

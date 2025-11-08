@@ -10,4 +10,5 @@ public class PollOptionResponse {
     private Long optionId;
     private String content;
     private int voteCount;
+    private int voteRate;
 }

@@ -32,7 +32,7 @@ public class SecurityConfig {
                                 "/error"           // 오류 페이지 등등
 
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/{slug}/post", "/{slug}/post/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

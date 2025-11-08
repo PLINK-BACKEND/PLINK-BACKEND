@@ -29,29 +29,14 @@ public class CommentService {
     // 댓글 작성하기
     @Transactional
     public Comment createComment(User author, CommentRequest request, Long postId) {
-        System.out.println("🔸 createComment() called for userId=" + author.getUserId());
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
-
-        System.out.println("🔸 post found: id=" + post.getId() + ", festivalSlug=" + post.getFestival().getSlug());
-
-
-
-        System.out.println("✅ authorId=" + author.getUserId());
-        System.out.println("✅ postSlug=" + post.getFestival().getSlug());
-        System.out.println("✅ userFestivalRepository test=" + userFestivalRepository.count());
 
 
         UserFestival userFestival = userFestivalRepository
                 .findByUser_UserIdAndFestivalSlug(author.getUserId(), post.getFestival().getSlug())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
-
-
-
-        System.out.println("userFestival id = " + userFestival.getId());
-        System.out.println("userFestival user = " + userFestival.getUser());
-        System.out.println("userFestival user id = " + userFestival.getUser().getUserId());
 
 
         Comment comment = Comment.builder()
@@ -61,7 +46,7 @@ public class CommentService {
                 .build();
 
 
-
+        post.increaseCommentCount();
         return commentRepository.save(comment);
     }
 

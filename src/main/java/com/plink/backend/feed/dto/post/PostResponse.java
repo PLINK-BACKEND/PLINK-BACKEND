@@ -1,6 +1,7 @@
 package com.plink.backend.feed.dto.post;
 
 
+import com.plink.backend.feed.dto.poll.PollResponse;
 import com.plink.backend.feed.entity.Image;
 import com.plink.backend.feed.entity.Post;
 import lombok.Builder;
@@ -26,6 +27,7 @@ public class PostResponse {
     private List<String> imageUrls;
     private int commentCount;
     private int likeCount;
+    private PollResponse poll;
 
     public static PostResponse from(Post post) {
         return PostResponse.builder()
@@ -44,6 +46,7 @@ public class PostResponse {
                                 .collect(Collectors.toList()))
                 .commentCount(post.getCommentCount())
                 .likeCount(post.getLikeCount())
+                .poll(post.getPoll() == null ? null : PollResponse.from(post.getPoll(), null))
                 .build();
     }
 }
