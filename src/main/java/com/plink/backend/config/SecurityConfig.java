@@ -30,7 +30,7 @@ public class SecurityConfig {
                                 "/user/info",     // 로그인한 유저 조회용
                                 "/ws/**",         // 웹소켓 엔드포인트
                                 "/error",           // 오류 페이지 등등
-                                "/api/*/games/**"
+                                "/*/games/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

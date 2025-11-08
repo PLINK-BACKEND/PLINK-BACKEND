@@ -34,5 +34,13 @@ public class GameScore {
     @Column(nullable = false)
     private int score;
 
+    @Column(nullable = false)
+    private String role;
+
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

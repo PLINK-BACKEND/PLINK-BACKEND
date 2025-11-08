@@ -1,6 +1,5 @@
 package com.plink.backend.auth.service;
 
-import com.plink.backend.auth.dto.GuestRequest;
 import com.plink.backend.auth.dto.LoginRequest;
 import com.plink.backend.auth.dto.SignUpRequest;
 import com.plink.backend.auth.dto.UserResponse;

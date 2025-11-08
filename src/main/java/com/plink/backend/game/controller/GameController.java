@@ -19,15 +19,21 @@ public class GameController {
     private final GameService gameService;
     private final GameWebSocketHandler gameWebSocketHandler;
 
-    // 게임 점수 등록
-    @PostMapping("/{gameId}/score")
-    public ResponseEntity<Void> submitScore(
+    // 게임 완료 시점에 클리어 데이터 저장 후 닉네임 방송
+    @PostMapping("/{gameId}/clear")
+    public ResponseEntity<Void> clearAndSaveScore(
             @PathVariable String slug,
             @PathVariable Long gameId,
-            @RequestBody GameScoreRequest request,
+            @RequestParam String nickname,
+            @RequestParam int score,
             @AuthenticationPrincipal User user
     ) {
-        gameService.submitScore(slug, gameId, request, user);
+        gameService.submitScore(slug, gameId, new GameScoreRequest(score, nickname), user);
+
+        String message = nickname + "님이 게임을 클리어했습니다! (점수: " + score + ")";
+        gameWebSocketHandler.broadcastToSlug(slug, message);
+
+        System.out.println("[broadcast] " + message);
         return ResponseEntity.ok().build();
     }
 
@@ -51,14 +57,4 @@ public class GameController {
     }
 
 
-    // 게임 완료 시점 테스트용
-    @PostMapping("/clear")
-    public void clearGame(
-            @PathVariable String slug,
-            @RequestParam String nickname
-    ) {
-        String message = nickname + "님이 게임을 클리어했습니다!";
-        gameWebSocketHandler.broadcastToSlug(slug, message);
-        System.out.println("[broadcast] " + message);
-    }
 }

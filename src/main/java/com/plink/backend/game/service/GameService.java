@@ -7,15 +7,16 @@ import com.plink.backend.game.entity.Game;
 import com.plink.backend.game.entity.GameScore;
 import com.plink.backend.game.repository.GameRepository;
 import com.plink.backend.game.repository.GameScoreRepository;
-import com.plink.backend.game.websocket.GameWebSocketHandler;
 import com.plink.backend.user.entity.User;
+import com.plink.backend.user.entity.UserFestival;
+import com.plink.backend.user.repository.UserFestivalRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -23,27 +24,39 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final GameScoreRepository gameScoreRepository;
-    private final GameWebSocketHandler gameWebSocketHandler; // 웹소켓 방송
+    private final UserFestivalRepository userFestivalRepository;
 
-    @Transactional
     public void submitScore(String slug, Long gameId, GameScoreRequest request, User user) {
+        // 게임 존재 여부 확인
         Game game = gameRepository.findByIdAndFestivalSlug(gameId, slug)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게임이 존재하지 않습니다."));
 
+        // 닉네임 결정 로직
+        String nickname;
+        String role;
+
+        if (user != null && user.getRole() != null && user.getRole().name().equals("USER")) {
+            // 로그인 유저 → UserFestival에서 닉네임 찾기
+            UserFestival uf = userFestivalRepository.findByUserAndFestivalSlug(user, slug)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 행사에 등록된 유저 닉네임이 없습니다."));
+            nickname = uf.getNickname();
+            role = "USER";
+        } else {
+            // 게스트 접근 → RequestParam 닉네임 그대로 사용
+            nickname = request.getNickname();
+            role = "GUEST";
+        }
+
+        // 점수 저장
         GameScore score = GameScore.builder()
                 .game(game)
-                .user(user.getRole().name().equals("USER") ? user : null)
-                .festivalSlug(slug)
-                .nickname(request.getNickname())
+                .nickname(nickname)
                 .score(request.getScore())
-                .createdAt(LocalDateTime.now())
+                .festivalSlug(slug)
+                .role(role)
                 .build();
 
         gameScoreRepository.save(score);
-
-        // slug별 방송
-        String message = request.getNickname() + "님이 " + slug + " 게임을 클리어했습니다!";
-        gameWebSocketHandler.broadcastToSlug(slug, message);
     }
 
     @Transactional(readOnly = true)
@@ -51,8 +64,11 @@ public class GameService {
         List<GameScore> scores = gameScoreRepository.findByFestivalSlugAndGame_IdOrderByScoreDesc(slug, gameId);
 
         List<GameScoreResponse> responseList = scores.stream()
-                .map(gs -> new GameScoreResponse(gs.getNickname(), gs.getScore(),
-                        gameScoreRepository.findRankByScore(gameId, slug, gs.getScore())))
+                .map(gs -> new GameScoreResponse(
+                        gs.getNickname(),
+                        gs.getScore(),
+                        gameScoreRepository.findRankByScore(gameId, slug, gs.getScore())
+                ))
                 .collect(Collectors.toList());
 
         return new GameRankingResponse(slug, gameId, responseList);
