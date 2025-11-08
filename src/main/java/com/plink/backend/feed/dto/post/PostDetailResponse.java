@@ -49,10 +49,25 @@ public class PostDetailResponse {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .author(post.getAuthor().getNickname())
+                .profileImageUrl(post.getAuthor().getUser().getProfileImageUrl())
+                .tagName(post.getTag().getTag_name())
+                .postType(post.getPostType().toString())
                 .createdAt(post.getCreatedAt())
-                .poll(null)
+                .updatedAt(post.getUpdatedAt())
+                .imageUrls(post.getImages() == null ? List.of() :
+                        post.getImages().stream()
+                                .map(Image::getImage_url)
+                                .collect(Collectors.toList()))
+                .comments(post.getComments() == null ? List.of() :
+                        post.getComments().stream()
+                                .map(CommentResponse::from)
+                                .collect(Collectors.toList()))
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .build();
+
     }
+
 
     public static PostDetailResponse from(Post post, PollResponse pollResponse) {
         return PostDetailResponse.builder()

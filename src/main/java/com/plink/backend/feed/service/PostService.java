@@ -21,6 +21,8 @@ import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +46,6 @@ public class PostService {
 
     @Transactional
     // 게시글 작성하기
-
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
         // 행사 검증
@@ -186,25 +187,12 @@ public class PostService {
     }
 
 
-    @Transactional
-    // 게시판 별로 게시글 조회
-    public Page<PostResponse> getPostListByTag(Pageable pageable, Long tagId) {
+    @Transactional(readOnly = true)
+    public Slice<PostResponse> getPostListByTag(Pageable pageable, Long tagId) {
 
+        Slice<Post> posts = postRepository.findAllByTag_IdOrderByCreatedAtAsc(tagId, pageable);
 
-        Page<Post> posts;
-
-        if (tagId == null) {
-
-            posts = postRepository.findAllByOrderByCreatedAtAsc(pageable);
-        } else {
-
-            Tag tag = tagRepository.findById(tagId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시판입니다."));
-
-            posts = postRepository.findAllByTag_IdOrderByCreatedAtAsc(tagId,pageable);
-        }
-
-        // 3. 엔티티 → DTO 변환
+        // 엔티티 → DTO 변환
         return posts.map(PostResponse::from);
     }
 
