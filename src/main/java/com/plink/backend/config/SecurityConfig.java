@@ -36,7 +36,7 @@ public class SecurityConfig {
                                 "/fourcuts/**"
 
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**","/{slug}/main","/{slug}/main/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

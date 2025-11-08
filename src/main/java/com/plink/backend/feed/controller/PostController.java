@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -98,7 +99,7 @@ public class PostController {
 
     // 게시판별 전체 조회
     @GetMapping
-    public ResponseEntity<Page<PostResponse>> getPostListByTag(
+    public ResponseEntity<Slice<PostResponse>> getPostListByTag(
             @PathVariable String slug,
             @RequestParam(required = false) String tagId,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -112,7 +113,7 @@ public class PostController {
             } catch (NumberFormatException ignored) {}
         }
 
-        Page<PostResponse> responses = postService.getPostListByTag(pageable, parsedId);
+        Slice<PostResponse> responses = postService.getPostListByTag(pageable, parsedId);
         return ResponseEntity.ok(responses);
     }
 }
