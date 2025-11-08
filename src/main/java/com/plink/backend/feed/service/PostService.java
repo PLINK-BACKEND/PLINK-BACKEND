@@ -22,8 +22,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -41,6 +44,7 @@ public class PostService {
     private final UserFestivalRepository userFestivalRepository;
     private final PollService pollService;
     private final UserService userService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     // 게시글 작성하기
@@ -88,10 +92,8 @@ public class PostService {
             Poll poll = pollService.createPoll(author, request.getPoll());
             poll.setPost(post);
             post.setPoll(poll);
-            postRepository.save(post);
         }
 
-        // 이미지 업로드 처리
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             for (MultipartFile file : request.getImages()) {
                 S3UploadResult uploadResult = s3Service.upload(file, "posts");
@@ -107,8 +109,27 @@ public class PostService {
             }
         }
 
-        // 최종 저장
-        return postRepository.save(post);
+        // 모든 엔티티 확정 후 최종 저장
+        Post finalPost = postRepository.save(post);
+
+        //WebSocket 메시지 전송
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+
+                String slugPath = "/topic/" + finalPost.getFestival().getSlug() + "/posts";
+                String tagPath = slugPath + "/" + finalPost.getTag().getId();
+
+                // 행사 전체 피드에 전송
+                messagingTemplate.convertAndSend(slugPath, PostResponse.from(finalPost));
+
+                // 행사 내 특정 태그 피드에도 전송
+                messagingTemplate.convertAndSend(tagPath, PostResponse.from(finalPost));
+            }
+        });
+
+        return finalPost;
+
     }
 
     // 게시글 수정
