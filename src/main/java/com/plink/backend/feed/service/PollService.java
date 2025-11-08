@@ -51,6 +51,7 @@ public class PollService {
         Poll poll = pollRepository.findById(pollId)
                 .orElseThrow(() -> new IllegalArgumentException("투표를 찾을 수 없습니다."));
 
+
         PollOption option = pollOptionRepository.findById(optionId)
                 .orElseThrow(() -> new IllegalArgumentException("선택지를 찾을 수 없습니다."));
 
@@ -79,7 +80,22 @@ public class PollService {
         pollVoteRepository.save(vote);
 
 
-        return PollResponse.from(poll, optionId);
+        Long selectedOptionId = option.getId();
+
+        return PollResponse.from(poll, selectedOptionId);
+    }
+
+    @Transactional(readOnly = true)
+    public PollResponse getPollResponse(Poll poll, User user) {
+        Long selectedOptionId = null;
+
+        if (user != null) {
+            selectedOptionId = pollVoteRepository.findByPollAndVoter(poll, user)
+                    .map(vote -> vote.getOption().getId())
+                    .orElse(null);
+        }
+
+        return PollResponse.from(poll, selectedOptionId);
     }
 
 

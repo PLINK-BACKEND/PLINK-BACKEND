@@ -1,6 +1,7 @@
 package com.plink.backend.feed.service;
 
 import com.plink.backend.commonService.S3UploadResult;
+import com.plink.backend.feed.dto.poll.PollResponse;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
@@ -46,31 +47,31 @@ public class PostService {
 
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
-        // 1️⃣ 행사 검증
+        // 행사 검증
         Festival festival = festivalRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 축제입니다."));
 
-        // 2️⃣ 태그 검증
+        // 태그 검증
         Tag tag = tagRepository.findById(request.getTagId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
 
-        // 3️⃣ 작성자-축제 매핑 검증
+        // 작성자-축제 매핑 검증
         UserFestival userFestival = userFestivalRepository
                 .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
 
-        // 4️⃣ 기본 내용 검증
+        // 기본 내용 검증
         if (request.getPostType() == PostType.NORMAL &&
                 (request.getContent() == null || request.getContent().isBlank())) {
             throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
         }
 
-        // 5️⃣ 이미지 개수 검증
+        // 이미지 개수 검증
         if (request.getImages() != null && request.getImages().size() > 3) {
             throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
         }
 
-        // 6️⃣ Post 생성 및 1차 저장
+        // Post 생성 및 1차 저장
         Post post = Post.builder()
                 .author(userFestival)
                 .title(request.getTitle())
@@ -82,15 +83,15 @@ public class PostService {
 
         postRepository.save(post);
 
-        // 7️⃣ Poll 생성 (POLL 타입일 경우만)
+        //  Poll 생성 (POLL 타입일 경우만)
         if (request.getPostType() == PostType.POLL) {
             Poll poll = pollService.createPoll(author, request.getPoll());
             poll.setPost(post);
             post.setPoll(poll);
-            postRepository.save(post); // 🔥 양방향 연관관계 최종 반영
+            postRepository.save(post);
         }
 
-        // 8️⃣ 이미지 업로드 처리
+        // 이미지 업로드 처리
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             for (MultipartFile file : request.getImages()) {
                 S3UploadResult uploadResult = s3Service.upload(file, "posts");
@@ -106,7 +107,7 @@ public class PostService {
             }
         }
 
-        // 9️⃣ 최종 저장
+        // 최종 저장
         return postRepository.save(post);
     }
 
@@ -170,11 +171,18 @@ public class PostService {
 
     // 게시글 상세 조회 (댓글/이미지까지 모두 포함)
     @Transactional(readOnly = true)
-    public PostDetailResponse getPostDetail(Long postId) {
+    public PostDetailResponse getPostDetail(Long postId,User user) {
         Post post = postRepository.findWithAllById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        return PostDetailResponse.from(post);
+        PollResponse pollResponse = null;
+
+        if (post.getPostType() == PostType.POLL && post.getPoll() != null) {
+            pollResponse = pollService.getPollResponse(post.getPoll(), user);
+        }
+
+        return PostDetailResponse.from(post, pollResponse);
+
     }
 
     // 게시글 모두 조회 (최신 글이 가장 밑으로)

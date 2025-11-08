@@ -1,6 +1,7 @@
 package com.plink.backend.feed.dto.poll;
 
 import com.plink.backend.feed.entity.Poll;
+import com.plink.backend.feed.entity.PollOption;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,6 +18,11 @@ public class PollResponse {
     private LocalDateTime createdAt;
 
     public static PollResponse from(Poll poll, Long selectedOptionId) {
+
+        int totalVotes = poll.getOptions().stream()
+                .mapToInt(PollOption::getVoteCount)
+                .sum();
+
         return PollResponse.builder()
                 .pollId(poll.getId())
                 .selectedOptionId(selectedOptionId)
@@ -26,6 +32,8 @@ public class PollResponse {
                                         .optionId(option.getId())
                                         .content(option.getContent())
                                         .voteCount(option.getVoteCount())
+                                        .voteRate(totalVotes == 0 ? 0:
+                                                (int) Math.round((option.getVoteCount() * 100.0) / totalVotes))
                                         .build()
                                 )
                                 .toList()

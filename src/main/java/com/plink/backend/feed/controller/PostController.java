@@ -84,8 +84,10 @@ public class PostController {
     // 게시글 상세 조회 (댓글까지 전부)
     @GetMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> getPostDetail(
-            @PathVariable String slug, @PathVariable Long postId) {
-        PostDetailResponse response = postService.getPostDetail(postId);
+            @PathVariable String slug,
+            @PathVariable Long postId,
+     @AuthenticationPrincipal User user) {
+        PostDetailResponse response = postService.getPostDetail(postId, user);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
