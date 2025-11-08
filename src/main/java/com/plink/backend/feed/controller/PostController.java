@@ -97,4 +97,15 @@ public class PostController {
         Page<PostResponse> responses = postService.getPostList(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
+
+    // 게시판별로 전체 조회
+    @GetMapping("/board/{tagId}")
+    public ResponseEntity<Page<PostResponse>> getPostListByTag(
+            @PathVariable String slug,
+            @PathVariable Long tagId,
+            @PageableDefault(size = 20) Pageable pageable){
+        Page<PostResponse> responses = postService.getPostListByTag(pageable,tagId);
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
+    }
+
 }

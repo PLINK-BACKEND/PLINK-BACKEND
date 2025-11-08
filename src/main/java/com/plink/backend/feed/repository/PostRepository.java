@@ -18,7 +18,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Optional<Post> findById(Long id);
 
     // 게시판 분리
-    Page<Post> findAllByTagCreatedAtAsc(Tag tag, Pageable pageable);
+    Page<Post> findAllByTagOrderByCreatedAtAsc(Tag tag, Pageable pageable);
 
     // 상세 조회: author, tag, festival, images, comments까지 한 번에 로딩
     @EntityGraph(attributePaths = {
@@ -33,4 +33,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 목록 조회: 댓글은 필요 없음 → Lazy 그대로 두기
     @EntityGraph(attributePaths = {"author", "tag", "images"})
     Page<Post> findAllByOrderByCreatedAtAsc(Pageable pageable);
+
+
 }

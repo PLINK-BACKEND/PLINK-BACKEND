@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +45,7 @@ public class PostService {
     // 게시글 작성하기
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
+
         // 행사 검증
         Festival festival = festivalRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 축제입니다."));
@@ -53,22 +54,10 @@ public class PostService {
         Tag tag = tagRepository.findById(request.getTagId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
 
-        // 게시글 생성
-        Post post = Post.builder()
-                .author(author)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .tag(tag)
-                .festival(festival)
-                .postType(request.getPostType())
-                .build();
-
-        // 앙케이트
+        // 게시글 타입
         Poll poll = null;
         if (request.getPostType() == PostType.POLL) {
-            poll = pollService.createPoll(author, request.getPoll()); // 앙케이트는 따로 처리
-            post.setPoll(poll);
-            poll.setPost(post);
+            poll = pollService.createPoll(author,request.getPoll()); // 앙케이트는 따로 처리
         }
 
         // 이미지 개수 검증
@@ -81,6 +70,21 @@ public class PostService {
                 (request.getContent() == null || request.getContent().isBlank())) {
             throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
         }
+
+        UserFestival userFestival = userFestivalRepository
+                .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
+
+        // 게시글 생성
+        Post post = Post.builder()
+                .author(userFestival)
+                .title(request.getTitle())
+                .content(request.getContent())
+                .tag(tag)
+                .festival(festival)
+                .postType(request.getPostType())
+                .build();
+        postRepository.save(post);
 
         // 이미지 업로드
         if (request.getImages() != null && !request.getImages().isEmpty()) {
@@ -102,9 +106,9 @@ public class PostService {
 
     // 게시글 수정
     @Transactional
-    public Post updatePost(User author, PostUpdateRequest request, Long postId) {
+    public Post updatePost(User author,PostUpdateRequest request,Long postId){
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
         // 작성자만 수정 권한을 가짐
         if (!post.getAuthor().getUser().getUserId().equals(author.getUserId())) {
@@ -122,7 +126,7 @@ public class PostService {
         }
 
         // 태그 수정
-        if (request.getTagId() != null) {
+        if (request.getTagId() != null ) {
             Tag tag = tagRepository.findById(request.getTagId())
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
             post.updateTag(tag);
@@ -133,7 +137,7 @@ public class PostService {
 
     // 게시글 삭제
     @Transactional
-    public void deletePost(User author, Long postId) {
+    public void deletePost(User author,Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
@@ -142,19 +146,21 @@ public class PostService {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
 
+
         // 이미지 삭제
         if (post.getImages() != null) {
             for (Image image : post.getImages()) {
                 try {
                     s3Service.delete(image.getS3key());
                 } catch (Exception e) {
-                    System.out.println("S3 이미지 삭제 실패: {}" + image.getS3key());
+                    System.out.println("S3 이미지 삭제 실패: {}"+ image.getS3key());
                 }
             }
 
         }
         postRepository.delete(post);
     }
+
 
     // 게시글 상세 조회 (댓글/이미지까지 모두 포함)
     @Transactional(readOnly = true)
@@ -169,11 +175,22 @@ public class PostService {
     @Transactional(readOnly = true)
     public Page<PostResponse> getPostList(Pageable pageable) {
         return postRepository.findAllByOrderByCreatedAtAsc(pageable)
-                .map(PostResponse::from); // Page<Post> → Page<PostResponseDto> 변환
+                .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
     }
 
+    @Transactional
     // 게시판 별로 게시글 조회
-    public Page<PostResponse> getPostListByTag(Pageable pageable, Long authorId) {
+    public Page<PostResponse> getPostListByTag(Pageable pageable, Long tagId) {
+
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 게시판입니다."));
+
+        // 2. 태그별 게시글 조회
+        Page<Post> posts = postRepository.findAllByTagOrderByCreatedAtAsc(tag, pageable);
+
+        // 3. 엔티티 → DTO 변환
+        return posts.map(PostResponse::from);
     }
+
 
 }
