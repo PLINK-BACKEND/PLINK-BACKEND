@@ -36,7 +36,7 @@ public class PostResponse {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .author(post.getAuthor().getNickname())
-                .profileImageUrl(post.getAuthor().getProfileImageUrl())
+                .profileImageUrl(post.getAuthor().getUser().getProfileImageUrl())
                 .tagName(post.getTag().getTag_name())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())

@@ -5,6 +5,7 @@ import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.entity.*;
+import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
 import com.plink.backend.commonService.S3Service;
@@ -13,17 +14,19 @@ import com.plink.backend.feed.repository.PostRepository;
 import com.plink.backend.feed.repository.TagRepository;
 import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.user.entity.User;
+import com.plink.backend.user.entity.UserFestival;
+import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class PostService {
     private final ImageRepository imageRepository;
     private final S3Service s3Service;
     private final FestivalRepository festivalRepository;
+    private final UserFestivalRepository userFestivalRepository;
     private final PollService pollService;
     private final UserService userService;
 
@@ -62,7 +66,7 @@ public class PostService {
         // 앙케이트
         Poll poll = null;
         if (request.getPostType() == PostType.POLL) {
-            poll = pollService.createPoll(author,request.getPoll()); // 앙케이트는 따로 처리
+            poll = pollService.createPoll(author, request.getPoll()); // 앙케이트는 따로 처리
             post.setPoll(poll);
             poll.setPost(post);
         }
@@ -98,46 +102,45 @@ public class PostService {
 
     // 게시글 수정
     @Transactional
-    public Post updatePost(User author,PostUpdateRequest request,Long postId){
-            Post post = postRepository.findById(postId)
-                    .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    public Post updatePost(User author, PostUpdateRequest request, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-            // 작성자만 수정 권한을 가짐
-            if (!post.getAuthor().getUserId().equals(author.getUserId())) {
-                throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
-            }
-
-            // 제목 수정 (값이 들어온 경우에만)
-            if (request.getTitle() != null && !request.getTitle().isBlank()) {
-                post.updateTitle(request.getTitle());
-            }
-
-            // 내용 수정
-            if (request.getContent() != null && !request.getContent().isBlank()) {
-                post.updateContent(request.getContent());
-            }
-
-            // 태그 수정
-            if (request.getTagId() != null ) {
-                Tag tag = tagRepository.findById(request.getTagId())
-                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
-                post.updateTag(tag);
-            }
-
-            return post;
+        // 작성자만 수정 권한을 가짐
+        if (!post.getAuthor().getUser().getUserId().equals(author.getUserId())) {
+            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
+
+        // 제목 수정 (값이 들어온 경우에만)
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            post.updateTitle(request.getTitle());
+        }
+
+        // 내용 수정
+        if (request.getContent() != null && !request.getContent().isBlank()) {
+            post.updateContent(request.getContent());
+        }
+
+        // 태그 수정
+        if (request.getTagId() != null) {
+            Tag tag = tagRepository.findById(request.getTagId())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
+            post.updateTag(tag);
+        }
+
+        return post;
+    }
 
     // 게시글 삭제
     @Transactional
-    public void deletePost(User author,Long postId) {
+    public void deletePost(User author, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
         // 작성자만 삭제 권한을 가짐
-        if (!post.getAuthor().getUserId().equals(author.getUserId())) {
+        if (!post.getAuthor().getUser().getUserId().equals(author.getUserId())) {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
-
 
         // 이미지 삭제
         if (post.getImages() != null) {
@@ -145,14 +148,13 @@ public class PostService {
                 try {
                     s3Service.delete(image.getS3key());
                 } catch (Exception e) {
-                    System.out.println("S3 이미지 삭제 실패: {}"+ image.getS3key());
+                    System.out.println("S3 이미지 삭제 실패: {}" + image.getS3key());
                 }
             }
 
         }
         postRepository.delete(post);
     }
-
 
     // 게시글 상세 조회 (댓글/이미지까지 모두 포함)
     @Transactional(readOnly = true)
@@ -167,11 +169,11 @@ public class PostService {
     @Transactional(readOnly = true)
     public Page<PostResponse> getPostList(Pageable pageable) {
         return postRepository.findAllByOrderByCreatedAtAsc(pageable)
-                .map(PostResponse::from);  // Page<Post> → Page<PostResponseDto> 변환
+                .map(PostResponse::from); // Page<Post> → Page<PostResponseDto> 변환
     }
 
     // 게시판 별로 게시글 조회
-    public Page<PostResponse> getPostListByTag(Pageable pageable, Long authorId) {}
-
+    public Page<PostResponse> getPostListByTag(Pageable pageable, Long authorId) {
+    }
 
 }

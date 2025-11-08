@@ -4,10 +4,14 @@ import com.plink.backend.feed.dto.comment.CommentRequest;
 import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.entity.Comment;
 import com.plink.backend.feed.entity.Post;
+import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.repository.CommentRepository;
 import com.plink.backend.feed.repository.PostRepository;
+import com.plink.backend.user.repository.UserFestivalRepository;
+import com.plink.backend.user.entity.UserFestival;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,18 +24,27 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final UserFestivalRepository userFestivalRepository;
 
     // 댓글 작성하기
     @Transactional
-    public Comment createComment(User author, CommentRequest request,Long postId) {
+    public Comment createComment(User author, CommentRequest request, Long postId) {
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
+
+        UserFestival userFestival = userFestivalRepository
+                .findByUser_UserIdAndFestivalSlug(author.getUserId(), post.getFestival().getSlug())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
+
+
         Comment comment = Comment.builder()
-                .author(author)
+                .author(userFestival)
                 .post(post)
                 .content(request.getContent())
                 .build();
+
 
         post.increaseCommentCount();
         return commentRepository.save(comment);
@@ -44,7 +57,7 @@ public class CommentService {
                 .orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
         // 작성자만 수정 권한을 가짐
-        if (!comment.getAuthor().getUserId().equals(author.getUserId())) {
+        if (!comment.getAuthor().getUser().getUserId().equals(author.getUserId())) {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
         comment.updateContent(request.getContent());
@@ -58,7 +71,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
 
-        if (!comment.getAuthor().getUserId().equals(author.getUserId())) {
+        if (!comment.getAuthor().getUser().getUserId().equals(author.getUserId())) {
             throw new SecurityException("본인만 댓글을 삭제할 수 있습니다.");
         }
 

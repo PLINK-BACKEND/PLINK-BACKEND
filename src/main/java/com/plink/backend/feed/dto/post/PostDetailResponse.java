@@ -44,7 +44,7 @@ public class PostDetailResponse {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .author(post.getAuthor().getNickname())
-                .profileImageUrl(post.getAuthor().getProfileImageUrl())
+                .profileImageUrl(post.getAuthor().getUser().getProfileImageUrl())
                 .tagName(post.getTag().getTag_name())
                 .postType(post.getPostType().toString())
                 .createdAt(post.getCreatedAt())
