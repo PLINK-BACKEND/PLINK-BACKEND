@@ -31,4 +31,14 @@ public class MypageController {
         return ResponseEntity.ok(posts);
     }
 
+    // 내가 좋아요 누른 글 조회
+    @GetMapping("/posts/liked")
+    public ResponseEntity<List<PostResponse>> getLikedPosts(
+            @AuthenticationPrincipal User user
+    ) {
+        List<PostResponse> response = mypageService.getLikedPosts(user.getUserId());
+        return ResponseEntity.ok(response);
+    }
+
+
 }
