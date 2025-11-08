@@ -43,39 +43,34 @@ public class PostService {
 
     @Transactional
     // 게시글 작성하기
+
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
-
-        // 행사 검증
+        // 1️⃣ 행사 검증
         Festival festival = festivalRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 축제입니다."));
 
-        // 태그 검증
+        // 2️⃣ 태그 검증
         Tag tag = tagRepository.findById(request.getTagId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
 
-        // 게시글 타입
-        Poll poll = null;
-        if (request.getPostType() == PostType.POLL) {
-            poll = pollService.createPoll(author,request.getPoll()); // 앙케이트는 따로 처리
-        }
+        // 3️⃣ 작성자-축제 매핑 검증
+        UserFestival userFestival = userFestivalRepository
+                .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
 
-        // 이미지 개수 검증
-        if (request.getImages() != null && request.getImages().size() > 3) {
-            throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
-        }
-
-        // 내용 검증
+        // 4️⃣ 기본 내용 검증
         if (request.getPostType() == PostType.NORMAL &&
                 (request.getContent() == null || request.getContent().isBlank())) {
             throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
         }
 
-        UserFestival userFestival = userFestivalRepository
-                .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
+        // 5️⃣ 이미지 개수 검증
+        if (request.getImages() != null && request.getImages().size() > 3) {
+            throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
+        }
 
-        // 게시글 생성
+        // 6️⃣ Post 생성 및 1차 저장
         Post post = Post.builder()
                 .author(userFestival)
                 .title(request.getTitle())
@@ -84,9 +79,18 @@ public class PostService {
                 .festival(festival)
                 .postType(request.getPostType())
                 .build();
+
         postRepository.save(post);
 
-        // 이미지 업로드
+        // 7️⃣ Poll 생성 (POLL 타입일 경우만)
+        if (request.getPostType() == PostType.POLL) {
+            Poll poll = pollService.createPoll(author, request.getPoll());
+            poll.setPost(post);
+            post.setPoll(poll);
+            postRepository.save(post); // 🔥 양방향 연관관계 최종 반영
+        }
+
+        // 8️⃣ 이미지 업로드 처리
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             for (MultipartFile file : request.getImages()) {
                 S3UploadResult uploadResult = s3Service.upload(file, "posts");
@@ -97,11 +101,13 @@ public class PostService {
                         .originalName(uploadResult.getOriginalFilename())
                         .image_url(uploadResult.getUrl())
                         .build();
+
                 post.getImages().add(image);
             }
         }
-        postRepository.save(post);
-        return post;
+
+        // 9️⃣ 최종 저장
+        return postRepository.save(post);
     }
 
     // 게시글 수정
