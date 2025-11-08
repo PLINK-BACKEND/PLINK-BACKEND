@@ -1,4 +1,4 @@
-package com.plink.backend.commonService;
+package com.plink.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,11 +21,8 @@ public class S3Service {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${cloud.aws.s3.base-url}")
-    private String baseUrl;
-
     // 파일 업로드 : 업로드 된 s3 key를 반환
-    public S3UploadResult upload(MultipartFile file, String dir) throws IOException {
+    public String upload(MultipartFile file, String dir) throws IOException {
         // 1-1. S3 key 규칙: 디렉토리/UUID_원본파일명
         String prefix = (dir == null || dir.isBlank()) ? "uploads" : dir;
         String key = prefix + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
@@ -39,8 +36,7 @@ public class S3Service {
                 .bucket(bucket)
                 .key(key)
                 .contentType(contentType)
-                .acl(ObjectCannedACL.PUBLIC_READ)
-
+                // .acl(ObjectCannedACL.PRIVATE)  // (기본이 PRIVATE라 보통 생략)
                 // .serverSideEncryption(ServerSideEncryption.AES256) // (옵션) SSE
                 .build();
 
@@ -48,10 +44,7 @@ public class S3Service {
         try (InputStream in = file.getInputStream()) {
             s3.putObject(put, RequestBody.fromInputStream(in, file.getSize()));
         }
-
-        String url = baseUrl + key;
-
-        return new S3UploadResult(key, url, file.getOriginalFilename());
+        return key;
     }
 
     // 삭제
