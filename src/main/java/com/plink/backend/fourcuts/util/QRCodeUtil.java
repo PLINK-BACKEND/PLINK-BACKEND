@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 public class QRCodeUtil {
 
     public byte[] generateQRCode(String content) throws WriterException, IOException {
-        // ✅ 수정 없음: URL을 그대로 QR에 사용 (이미 인코딩 완료 상태)
+        // URL을 그대로 QR에 사용 (이미 인코딩 완료 상태이기 때문!)
         QRCodeWriter writer = new QRCodeWriter();
         BitMatrix matrix = writer.encode(content.trim(), BarcodeFormat.QR_CODE, 300, 300);
 

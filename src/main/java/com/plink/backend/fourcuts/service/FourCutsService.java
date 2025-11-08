@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,16 +23,14 @@ public class FourCutsService {
 
     public FourCutsResponse uploadFourCut(MultipartFile file) {
         try {
-            /**
-             * ✅ 1️⃣ 파일명 인코딩 처리
-             * - S3Service는 수정하지 않으므로, 여기서 한글 파일명만 미리 안전하게 바꾼 래퍼 MultipartFile을 생성
-             */
-            String encodedName = URLEncoder.encode(file.getOriginalFilename(), StandardCharsets.UTF_8)
-                    .replace("+", "%20");
+            // 파일명에서 확장자만 추출하고, 한글 이름 대신 안전한 UUID 이름 생성
+            String originalName = file.getOriginalFilename();
+            String ext = originalName.substring(originalName.lastIndexOf("."));
+            String safeName = UUID.randomUUID() + ext; // ex) 8d9a7e3a-...jpg
 
-            MultipartFile encodedFile = new MultipartFile() {
+            MultipartFile safeFile = new MultipartFile() {
                 @Override public String getName() { return file.getName(); }
-                @Override public String getOriginalFilename() { return encodedName; } // ✅ 수정: 한글 인코딩된 이름
+                @Override public String getOriginalFilename() { return safeName; }
                 @Override public String getContentType() { return file.getContentType(); }
                 @Override public boolean isEmpty() { return file.isEmpty(); }
                 @Override public long getSize() { return file.getSize(); }
@@ -40,19 +39,19 @@ public class FourCutsService {
                 @Override public void transferTo(java.io.File dest) throws IOException { file.transferTo(dest); }
             };
 
-            // ✅ 2️⃣ S3 업로드 (공통 S3Service는 그대로 사용)
-            S3UploadResult uploadResult = s3Service.upload(encodedFile, "fourcuts");
+            // 네컷사진 업로드
+            S3UploadResult uploadResult = s3Service.upload(safeFile, "fourcuts");
 
-            // ✅ 3️⃣ 업로드된 URL 그대로 QR 생성에 사용
+            // 업로드된 URL을 QR 코드에 그대로 사용
             String imageUrl = uploadResult.getUrl();
 
-            // 4️⃣ QR 코드 생성
+            // QR 코드 생성
             byte[] qrBytes = qrCodeUtil.generateQRCode(imageUrl);
 
-            // 5️⃣ QR 코드 파일 업로드
+            // QR 코드 파일 업로드
             MultipartFile qrFile = new MultipartFile() {
                 @Override public String getName() { return "qr"; }
-                @Override public String getOriginalFilename() { return "qr_" + encodedName; } // ✅ QR 파일명도 안전하게
+                @Override public String getOriginalFilename() { return "qr_" + safeName; }
                 @Override public String getContentType() { return "image/png"; }
                 @Override public boolean isEmpty() { return qrBytes.length == 0; }
                 @Override public long getSize() { return qrBytes.length; }

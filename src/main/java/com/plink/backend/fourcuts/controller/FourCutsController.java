@@ -13,9 +13,7 @@ public class FourCutsController {
 
     private final FourCutsService fourCutsService;
 
-    /**
-     * ✅ 네컷사진 업로드 및 QR 생성
-     */
+    // 네컷사진 업로드 및 QR 생성
     @PostMapping("/upload")
     public FourCutsResponse uploadFourCut(@RequestParam("file") MultipartFile file) {
         return fourCutsService.uploadFourCut(file);
