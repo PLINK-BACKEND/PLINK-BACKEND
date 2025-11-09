@@ -73,7 +73,7 @@ public class MypageService {
 
     // 프로필 수정
     @Transactional
-    public UserResponse updateProfile(User user, String slug, String nickname, MultipartFile profileImage) throws IOException {
+    public UserResponse updateProfile(User user, String slug, String nickname, MultipartFile profileImage, String defaultProfileUrl) throws IOException {
 
         boolean updated = false;
 
@@ -101,6 +101,12 @@ public class MypageService {
 
             S3UploadResult result = s3Service.upload(profileImage, "profiles");
             user.setProfileImageUrl(result.getUrl());
+            updated = true;
+        }
+
+        // 프론트 기본 이미지 URL 적용 (S3 업로드 X)
+        else if (defaultProfileUrl != null && !defaultProfileUrl.isBlank()) {
+            user.setProfileImageUrl(defaultProfileUrl);
             updated = true;
         }
 
