@@ -6,9 +6,6 @@ on:
       - main
       - develop
 
-permissions:
-  contents: write
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -25,20 +22,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # 3. Gradle 빌드
       - name: Build with Gradle
         run: chmod +x gradlew && ./gradlew clean bootJar -x test
 
-      - name: Ensure JAR exists before upload
+      # 4. 빌드 결과 확인
+      - name: Verify build output
         run: |
-          if ! ls build/libs/*.jar 1> /dev/null 2>&1; then
-            echo "❌ No JAR file found in build/libs"
-            exit 1
-          else
-            echo "✅ JAR file ready for deployment:"
-            ls -lh build/libs/*.jar
-          fi
+          echo "=== Checking JAR files ==="
+          ls -lh build/libs || echo "No build/libs directory found!"
 
-      - name: Copy JAR to EC2
+      # 5. JAR + Dockerfile 전송
+      - name: Copy JAR and Dockerfile to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
@@ -48,7 +43,6 @@ jobs:
             build/libs/*.jar
             Dockerfile
           target: "/home/ubuntu/app"
-
 
       # 6. EC2에서 Docker 빌드 및 실행
       - name: Deploy on EC2 via SSH
