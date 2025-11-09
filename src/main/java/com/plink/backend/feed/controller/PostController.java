@@ -99,7 +99,7 @@ public class PostController {
 
     // 게시판별 전체 조회
     @GetMapping
-    public ResponseEntity<Slice<PostResponse>> getPostListByTag(
+    public ResponseEntity<PostResponse.SliceResult> getPostListByTag(
             @AuthenticationPrincipal User user,
             @PathVariable String slug,
             @RequestParam(required = false) String tagId,
@@ -114,7 +114,7 @@ public class PostController {
             } catch (NumberFormatException ignored) {}
         }
 
-        Slice<PostResponse> responses = postService.getPostListByTag(user, slug,pageable, parsedId);
-        return ResponseEntity.ok(responses);
+        PostResponse.SliceResult result = postService.getPostListByTag(user, slug, pageable, parsedId);
+        return ResponseEntity.ok(result);
     }
 }

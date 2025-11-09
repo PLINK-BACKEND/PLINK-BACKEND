@@ -204,8 +204,9 @@ public class PostService {
     }
 
 
+    // 게시글 전체 조회
     @Transactional(readOnly = true)
-    public Slice<PostResponse> getPostListByTag(User user, String slug, Pageable pageable, Long tagId) {
+    public PostResponse.SliceResult getPostListByTag(User user, String slug, Pageable pageable, Long tagId) {
 
         List<Long> hiddenPostIds = new ArrayList<>();
         UserFestival userFestival = null;
@@ -241,7 +242,8 @@ public class PostService {
             }
         }
 
-        return posts.map(PostResponse::from);
+        Slice<PostResponse> mapped = posts.map(PostResponse::from);
+        return PostResponse.SliceResult.from(mapped);
     }
 
 

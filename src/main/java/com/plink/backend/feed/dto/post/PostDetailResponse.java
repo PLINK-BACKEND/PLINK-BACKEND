@@ -92,5 +92,4 @@ public class PostDetailResponse {
                 .build();
     }
 
-
 }
