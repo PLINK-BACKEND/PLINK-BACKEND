@@ -43,6 +43,11 @@ jobs:
           pwd
           ls -R | grep backend-0.0.1-SNAPSHOT.jar || echo "No jar found!"
           find /home/runner/work -name "*.jar" || echo "No jar found anywhere!"
+      # actions가 jar 파일을 실제로 찾고 있는지 확인
+      - name: Check if jar exists
+        run: |
+          echo "Checking build/libs directory..."
+          ls -lh build/libs || echo "No build/libs found!"
 
       # 5. JAR + Dockerfile 전송
       - name: Copy JAR and Dockerfile to EC2
