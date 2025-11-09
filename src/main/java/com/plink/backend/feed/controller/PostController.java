@@ -99,6 +99,7 @@ public class PostController {
     // 게시판별 전체 조회
     @GetMapping
     public ResponseEntity<Page<PostResponse>> getPostListByTag(
+            @AuthenticationPrincipal User user,
             @PathVariable String slug,
             @RequestParam(required = false) String tagId,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -112,7 +113,7 @@ public class PostController {
             } catch (NumberFormatException ignored) {}
         }
 
-        Page<PostResponse> responses = postService.getPostListByTag(pageable, parsedId);
+        Page<PostResponse> responses = postService.getPostListByTag(user, slug,pageable, parsedId);
         return ResponseEntity.ok(responses);
     }
 }

@@ -6,6 +6,7 @@ import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.entity.*;
+import com.plink.backend.feed.repository.HiddenContentRepository;
 import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
@@ -27,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Service
@@ -39,6 +42,7 @@ public class PostService {
     private final S3Service s3Service;
     private final FestivalRepository festivalRepository;
     private final UserFestivalRepository userFestivalRepository;
+    private final HiddenContentRepository hiddenContentRepository;
     private final PollService pollService;
     private final UserService userService;
 
@@ -188,23 +192,40 @@ public class PostService {
 
     @Transactional
     // 게시판 별로 게시글 조회
-    public Page<PostResponse> getPostListByTag(Pageable pageable, Long tagId) {
+    public Page<PostResponse> getPostListByTag(User user, String slug, Pageable pageable, Long tagId) {
 
+        List<Long> hiddenPostIds = new ArrayList<>();
+        UserFestival userFestival = null;
+
+        if (user != null) {
+            userFestival = userFestivalRepository
+                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                    .orElse(null);
+
+            if (userFestival != null) {
+                hiddenPostIds = hiddenContentRepository
+                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.POST);
+            }
+        }
 
         Page<Post> posts;
 
         if (tagId == null) {
-
-            posts = postRepository.findAllByOrderByCreatedAtAsc(pageable);
+            if (userFestival != null && !hiddenPostIds.isEmpty()) {
+                posts = postRepository.findAllByIdNotInOrderByCreatedAtAsc(hiddenPostIds, pageable);
+            } else {
+                posts = postRepository.findAllByOrderByCreatedAtAsc(pageable);
+            }
         } else {
-
             Tag tag = tagRepository.findById(tagId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시판입니다."));
-
-            posts = postRepository.findAllByTag_IdOrderByCreatedAtAsc(tagId,pageable);
+            if (userFestival != null && !hiddenPostIds.isEmpty()) {
+                posts = postRepository.findAllByTag_IdAndIdNotInOrderByCreatedAtAsc(tagId, hiddenPostIds, pageable);
+            } else {
+                posts = postRepository.findAllByTag_IdOrderByCreatedAtAsc(tagId, pageable);
+            }
         }
 
-        // 3. 엔티티 → DTO 변환
         return posts.map(PostResponse::from);
     }
 

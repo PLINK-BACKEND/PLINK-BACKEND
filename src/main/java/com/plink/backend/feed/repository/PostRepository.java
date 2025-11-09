@@ -20,6 +20,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 게시판 분리
     Page<Post> findAllByTag_IdOrderByCreatedAtAsc(Long tagId, Pageable pageable);
 
+    // 숨김 제외
+    Page<Post> findAllByIdNotInOrderByCreatedAtAsc(List<Long> ids, Pageable pageable);
+    Page<Post> findAllByTag_IdAndIdNotInOrderByCreatedAtAsc(Long tagId, List<Long> ids, Pageable pageable);
+
     // 상세 조회: author, tag, festival, images, comments까지 한 번에 로딩
     @EntityGraph(attributePaths = {
             "author",
