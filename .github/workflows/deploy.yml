@@ -25,15 +25,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Gradle 빌드
+      # 3. Gradle 빌드 (📍중요: PLINK-BACKEND 내부에서 실행)
       - name: Build with Gradle
-        run: chmod +x gradlew && ./gradlew clean bootJar -x test
+        run: |
+          cd PLINK-BACKEND
+          chmod +x gradlew
+          ./gradlew clean bootJar -x test
 
-      # 4. JAR 확인
+      # 4. JAR 확인 (📍경로 수정)
       - name: Verify JAR exists
         run: |
           echo "=== Checking JAR files ==="
-          ls -lh build/libs
+          ls -lh PLINK-BACKEND/build/libs
 
       # 5. EC2로 JAR + Dockerfile 전송
       - name: Copy JAR to EC2
@@ -42,9 +45,8 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
-          # Actions 런너는 repo root 기준으로 찾음
           source: |
-            PLINK-BACKEND/build/libs/backend-0.0.1-SNAPSHOT.jar
+            PLINK-BACKEND/build/libs/*.jar
             PLINK-BACKEND/Dockerfile
           target: "/home/ubuntu/app"
 
