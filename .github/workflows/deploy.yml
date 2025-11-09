@@ -13,7 +13,7 @@ jobs:
     # 모든 run 명령의 기본 실행 경로를 지정
     defaults:
       run:
-        working-directory: ./PLINK-BACKEND
+        working-directory: .
 
     steps:
       # 1. Checkout
