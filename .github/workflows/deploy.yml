@@ -28,6 +28,14 @@ jobs:
       # 3. Gradle 빌드 (테스트 제외)
       - name: Build with Gradle
         run: chmod +x gradlew && ./gradlew clean build -x test
+      # jar 파일이 실제로 생겼는지 출력 (로그)
+      - name: List build outputs
+        run: ls -R build/libs || echo "build/libs is empty"
+      # build/libs가 비었는지 확인 (로그)
+      - name: Verify JAR exists
+        run: |
+          echo "=== Checking JAR files ==="
+          ls -lh build/libs || echo "❌ build/libs is empty!"
 
       # 4. ec2에 파일 복사하도록 하기
       - name: Copy files to EC2
