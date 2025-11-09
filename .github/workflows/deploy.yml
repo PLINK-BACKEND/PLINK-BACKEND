@@ -4,19 +4,16 @@ on:
   push:
     branches:
       - main
-      - develop
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    # 모든 run 명령의 기본 실행 경로를 지정
-    defaults:
-      run:
-        working-directory: .
-
     steps:
-      # 1. Checkout
+      # 1. Checkout source
       - name: Checkout source code
         uses: actions/checkout@v3
 
@@ -27,41 +24,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Gradle 빌드
+      # 3. Gradle 빌드 (테스트 제외)
       - name: Build with Gradle
-        run: chmod +x gradlew && ./gradlew clean bootJar -x test
+        run: chmod +x gradlew && ./gradlew clean build -x test
 
-      # 4. 빌드 결과 확인
-      - name: Verify build output
-        run: |
-          echo "=== Checking JAR files ==="
-          ls -lh build/libs || echo "No build/libs directory found!"
-          
-      - name: find built jar (for Debugging..)
-        run: |
-          echo "=== Searching for jar files under the workspace ==="
-          pwd
-          ls -R | grep backend-0.0.1-SNAPSHOT.jar || echo "No jar found!"
-          find /home/runner/work -name "*.jar" || echo "No jar found anywhere!"
-      # actions가 jar 파일을 실제로 찾고 있는지 확인
-      - name: Check if jar exists
-        run: |
-          echo "Checking build/libs directory..."
-          ls -lh build/libs || echo "No build/libs found!"
-
-      # 5. JAR + Dockerfile 전송
-      - name: Copy JAR and Dockerfile to EC2
+      # 4. EC2로 jar 전송
+      - name: Copy JAR to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
-          username: ubuntu
+          username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
-          source: |
-            /home/runner/work/PLINK-BACKEND/PLINK-BACKEND/build/libs/backend-0.0.1-SNAPSHOT.jar
-            /home/runner/work/PLINK-BACKEND/PLINK-BACKEND/Dockerfile
-          target: /home/ubuntu/app
+          source: "build/libs/*.jar,Dockerfile"
+          target: "/home/ubuntu/app"
 
-      # 6. EC2에서 Docker 빌드 및 실행
+      # 5. EC2에서 Docker 빌드 및 실행
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -70,20 +47,10 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             cd /home/ubuntu/app
+            docker stop myapp || true
+            docker rm myapp || true
+            docker rmi myapp:latest || true
 
-            if [ "${{ github.ref_name }}" == "main" ]; then
-              APP_NAME=myapp-main
-              HOST_PORT=8080
-            else
-              APP_NAME=myapp-dev
-              HOST_PORT=8081
-            fi
-
-            echo "Deploying branch: ${{ github.ref_name }} -> container: $APP_NAME on port $HOST_PORT"
-
-            docker stop $APP_NAME || true
-            docker rm $APP_NAME || true
-            docker rmi $APP_NAME:latest || true
-
-            docker build -t $APP_NAME .
-            docker run -d -p $HOST_PORT:8080 --name $APP_NAME --restart always $APP_NAME
+            # Dockerfile이 app 폴더 안에 있다고 가정
+            docker build -t myapp .
+            docker run -d -p 8080:8080 --name myapp --restart always myapp
