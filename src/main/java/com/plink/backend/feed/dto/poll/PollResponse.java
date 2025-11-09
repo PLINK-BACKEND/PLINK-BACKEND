@@ -15,7 +15,6 @@ public class PollResponse {
     private Long pollId;
     private Long selectedOptionId;
     private List<PollOptionResponse> result;
-    private LocalDateTime createdAt;
 
     public static PollResponse from(Poll poll, Long selectedOptionId) {
 
@@ -38,7 +37,6 @@ public class PollResponse {
                                 )
                                 .toList()
                 )
-                .createdAt(LocalDateTime.now())
                 .build();
     }
 }
