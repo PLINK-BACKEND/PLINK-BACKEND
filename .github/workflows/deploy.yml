@@ -29,17 +29,18 @@ jobs:
       - name: Build with Gradle
         run: chmod +x gradlew && ./gradlew clean build -x test
 
-      # 4. EC2로 jar 전송
-      - name: Copy JAR to EC2
+      # 4. ec2에 파일 복사하도록 하기
+      - name: Copy files to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
           source: |
-            ./build/libs/*.jar
+            build/libs/*.jar
             Dockerfile
           target: "/home/ubuntu/app"
+
 
       # 5. EC2에서 Docker 빌드 및 실행
       - name: Deploy on EC2 via SSH
