@@ -47,7 +47,6 @@ public class PostController {
         PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
     }
 
     // 게시글 수정 (PATCH)
@@ -99,7 +98,7 @@ public class PostController {
 
     // 게시판별 전체 조회
     @GetMapping
-    public ResponseEntity<Slice<PostResponse>> getPostListByTag(
+    public ResponseEntity<PostResponse.SliceResult> getPostListByTag(
             @PathVariable String slug,
             @RequestParam(required = false) String tagId,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -114,6 +113,6 @@ public class PostController {
         }
 
         Slice<PostResponse> responses = postService.getPostListByTag(pageable, parsedId);
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(PostResponse.SliceResult.from(responses));
     }
 }
