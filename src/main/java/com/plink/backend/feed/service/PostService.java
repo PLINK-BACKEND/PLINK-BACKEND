@@ -173,19 +173,32 @@ public class PostService {
     }
 
 
-    // 게시글 상세 조회 (댓글/이미지까지 모두 포함)
+    // 게시글 상세 조회 (댓글까지 모두 포함)
     @Transactional(readOnly = true)
-    public PostDetailResponse getPostDetail(Long postId,User user) {
+    public PostDetailResponse getPostDetail(User user, String slug, Long postId) {
         Post post = postRepository.findWithAllById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        PollResponse pollResponse = null;
+        // 로그인한 사용자가 있을 경우, 숨긴 댓글 ID 목록 조회
+        List<Long> hiddenCommentIds = new ArrayList<>();
 
+        if (user != null) {
+            UserFestival userFestival = userFestivalRepository
+                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                    .orElse(null);
+
+            if (userFestival != null) {
+                hiddenCommentIds = hiddenContentRepository
+                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
+            }
+        }
+
+        PollResponse pollResponse = null;
         if (post.getPostType() == PostType.POLL && post.getPoll() != null) {
             pollResponse = pollService.getPollResponse(post.getPoll(), user);
         }
 
-        return PostDetailResponse.from(post, pollResponse);
+        return PostDetailResponse.from(post, pollResponse, hiddenCommentIds);
 
     }
 

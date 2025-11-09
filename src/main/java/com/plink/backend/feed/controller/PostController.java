@@ -90,7 +90,7 @@ public class PostController {
             @PathVariable String slug,
             @PathVariable Long postId,
      @AuthenticationPrincipal User user) {
-        PostDetailResponse response = postService.getPostDetail(postId, user);
+        PostDetailResponse response = postService.getPostDetail(user, slug, postId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
