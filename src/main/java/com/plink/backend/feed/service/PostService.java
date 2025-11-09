@@ -22,6 +22,7 @@ import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -203,13 +204,13 @@ public class PostService {
     }
 
 
-    @Transactional
-    // 게시판 별로 게시글 조회
-    public Page<PostResponse> getPostListByTag(User user, String slug, Pageable pageable, Long tagId) {
+    @Transactional(readOnly = true)
+    public Slice<PostResponse> getPostListByTag(User user, String slug, Pageable pageable, Long tagId) {
 
         List<Long> hiddenPostIds = new ArrayList<>();
         UserFestival userFestival = null;
 
+        // 로그인한 사용자라면 UserFestival 조회
         if (user != null) {
             userFestival = userFestivalRepository
                     .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
@@ -221,17 +222,18 @@ public class PostService {
             }
         }
 
-        Page<Post> posts;
+        Slice<Post> posts;
 
+        // 태그가 없는 경우 (전체 게시글)
         if (tagId == null) {
             if (userFestival != null && !hiddenPostIds.isEmpty()) {
                 posts = postRepository.findAllByIdNotInOrderByCreatedAtAsc(hiddenPostIds, pageable);
             } else {
                 posts = postRepository.findAllByOrderByCreatedAtAsc(pageable);
             }
-        } else {
-            Tag tag = tagRepository.findById(tagId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시판입니다."));
+        }
+        // 태그가 있는 경우 (특정 게시판)
+        else {
             if (userFestival != null && !hiddenPostIds.isEmpty()) {
                 posts = postRepository.findAllByTag_IdAndIdNotInOrderByCreatedAtAsc(tagId, hiddenPostIds, pageable);
             } else {

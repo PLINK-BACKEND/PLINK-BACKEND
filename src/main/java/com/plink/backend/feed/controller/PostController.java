@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -89,7 +90,7 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> getPostDetail(
             @PathVariable String slug,
             @PathVariable Long postId,
-     @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal User user) {
         PostDetailResponse response = postService.getPostDetail(user, slug, postId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -98,7 +99,7 @@ public class PostController {
 
     // 게시판별 전체 조회
     @GetMapping
-    public ResponseEntity<Page<PostResponse>> getPostListByTag(
+    public ResponseEntity<Slice<PostResponse>> getPostListByTag(
             @AuthenticationPrincipal User user,
             @PathVariable String slug,
             @RequestParam(required = false) String tagId,
@@ -113,7 +114,7 @@ public class PostController {
             } catch (NumberFormatException ignored) {}
         }
 
-        Page<PostResponse> responses = postService.getPostListByTag(user, slug,pageable, parsedId);
+        Slice<PostResponse> responses = postService.getPostListByTag(user, slug,pageable, parsedId);
         return ResponseEntity.ok(responses);
     }
 }

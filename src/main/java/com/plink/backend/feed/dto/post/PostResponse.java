@@ -1,11 +1,13 @@
 package com.plink.backend.feed.dto.post;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.plink.backend.feed.dto.poll.PollResponse;
 import com.plink.backend.feed.entity.Image;
 import com.plink.backend.feed.entity.Post;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 // 댓글리스트 제외
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostResponse {
     private Long id;
     private String postType;
@@ -28,6 +31,7 @@ public class PostResponse {
     private int commentCount;
     private int likeCount;
     private PollResponse poll;
+
 
     public static PostResponse from(Post post) {
         return PostResponse.builder()
@@ -48,5 +52,23 @@ public class PostResponse {
                 .likeCount(post.getLikeCount())
                 .poll(post.getPoll() == null ? null : PollResponse.from(post.getPoll(), null))
                 .build();
+    }
+
+    @Getter
+    @Builder
+    public static class SliceResult {
+        private List<PostResponse> posts;
+        private boolean hasNext;
+        private int page;
+        private int size;
+
+        public static SliceResult from(Slice<PostResponse> slice) {
+            return SliceResult.builder()
+                    .posts(slice.getContent())
+                    .hasNext(slice.hasNext())
+                    .page(slice.getNumber())
+                    .size(slice.getSize())
+                    .build();
+        }
     }
 }

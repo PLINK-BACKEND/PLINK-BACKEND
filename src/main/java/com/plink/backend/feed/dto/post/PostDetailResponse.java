@@ -1,5 +1,6 @@
 package com.plink.backend.feed.dto.post;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.dto.poll.PollResponse;
 import com.plink.backend.feed.entity.Image;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostDetailResponse {
     private Long id;
     private String postType;
@@ -38,7 +39,6 @@ public class PostDetailResponse {
     @Nullable
     private PollResponse poll;
 
-
     // 엔티티 -> DTO 변환 편의 메서드
     // 게시글 상세보기
     public static PostDetailResponse from(Post post) {
@@ -47,10 +47,25 @@ public class PostDetailResponse {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .author(post.getAuthor().getNickname())
+                .profileImageUrl(post.getAuthor().getUser().getProfileImageUrl())
+                .tagName(post.getTag().getTag_name())
+                .postType(post.getPostType().toString())
                 .createdAt(post.getCreatedAt())
-                .poll(null)
+                .updatedAt(post.getUpdatedAt())
+                .imageUrls(post.getImages() == null ? List.of() :
+                        post.getImages().stream()
+                                .map(Image::getImage_url)
+                                .collect(Collectors.toList()))
+                .comments(post.getComments() == null ? List.of() :
+                        post.getComments().stream()
+                                .map(CommentResponse::from)
+                                .collect(Collectors.toList()))
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .build();
+
     }
+
 
     public static PostDetailResponse from(Post post, PollResponse pollResponse) {
         return from(post, pollResponse, List.of()); // 댓글 필터링 없음 → 전체 표시
