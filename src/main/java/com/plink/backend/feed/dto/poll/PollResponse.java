@@ -1,5 +1,6 @@
 package com.plink.backend.feed.dto.poll;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.plink.backend.feed.entity.Poll;
 import com.plink.backend.feed.entity.PollOption;
 import lombok.Builder;
@@ -11,6 +12,7 @@ import java.util.List;
 @Getter
 @Builder
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PollResponse {
     private Long pollId;
     private Long selectedOptionId;
