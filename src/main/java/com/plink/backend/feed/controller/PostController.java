@@ -10,6 +10,7 @@ import com.plink.backend.feed.service.PostService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -26,6 +27,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 
+
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{slug}/posts")
@@ -47,6 +50,7 @@ public class PostController {
         PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
     }
 
     // 게시글 수정 (PATCH)
@@ -89,8 +93,8 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> getPostDetail(
             @PathVariable String slug,
             @PathVariable Long postId,
-     @AuthenticationPrincipal User user) {
-        PostDetailResponse response = postService.getPostDetail(postId, user);
+            @AuthenticationPrincipal User user) {
+        PostDetailResponse response = postService.getPostDetail(user, slug, postId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -99,20 +103,13 @@ public class PostController {
     // 게시판별 전체 조회
     @GetMapping
     public ResponseEntity<PostResponse.SliceResult> getPostListByTag(
+            @AuthenticationPrincipal User user,
             @PathVariable String slug,
-            @RequestParam(required = false) String tagId,
+            @RequestParam(required = false) String tagName,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        Long parsedId = null;
-        if (tagId != null) {
-            // Tomcat이 넘기는 버그 방지
-            String cleaned = tagId.replaceAll(".*,", ""); // 마지막 숫자만 남기기
-            try {
-                parsedId = Long.parseLong(cleaned.trim());
-            } catch (NumberFormatException ignored) {}
-        }
+        PostResponse.SliceResult result = postService.getPostListByTag(user, slug, pageable, tagName);
+        return ResponseEntity.ok(result);
 
-        Slice<PostResponse> responses = postService.getPostListByTag(pageable, parsedId);
-        return ResponseEntity.ok(PostResponse.SliceResult.from(responses));
     }
 }

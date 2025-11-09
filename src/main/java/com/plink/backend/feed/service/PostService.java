@@ -6,6 +6,7 @@ import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.entity.*;
+import com.plink.backend.feed.repository.HiddenContentRepository;
 import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.main.repository.FestivalRepository;
 import com.plink.backend.main.entity.Festival;
@@ -19,23 +20,19 @@ import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-@Slf4j
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -46,12 +43,13 @@ public class PostService {
     private final S3Service s3Service;
     private final FestivalRepository festivalRepository;
     private final UserFestivalRepository userFestivalRepository;
+    private final HiddenContentRepository hiddenContentRepository;
     private final PollService pollService;
     private final UserService userService;
-    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     // 게시글 작성하기
+
     public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
 
         // 행사 검증
@@ -78,9 +76,6 @@ public class PostService {
             throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
         }
 
-        String festivalSlug = festival.getSlug();
-        Long tagId = tag.getId();
-
         // Post 생성 및 1차 저장
         Post post = Post.builder()
                 .author(userFestival)
@@ -98,8 +93,10 @@ public class PostService {
             Poll poll = pollService.createPoll(author, request.getPoll());
             poll.setPost(post);
             post.setPoll(poll);
+            postRepository.save(post);
         }
 
+        // 이미지 업로드 처리
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             for (MultipartFile file : request.getImages()) {
                 S3UploadResult uploadResult = s3Service.upload(file, "posts");
@@ -115,38 +112,8 @@ public class PostService {
             }
         }
 
-        // 모든 엔티티 확정 후 최종 저장
-        Post finalPost = postRepository.save(post);
-
-        // WebSocket 메시지 전송
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-
-                new Thread(() -> {
-                    try {
-                        // 💡 구독 등록 완료까지 약간 기다려준다 (0.5초 정도)
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-
-                    String slugPath = "/topic/" + festivalSlug + "/posts";
-                    String tagPath = slugPath + "/" + tagId;
-
-                    // 행사 전체 피드에 전송
-                    log.info("📡 Broadcasting to All {}", slugPath);
-                    messagingTemplate.convertAndSend(slugPath, PostResponse.from(finalPost));
-
-                    // 행사 내 특정 태그 피드에도 전송
-                    log.info("📡 Broadcasting to Tag {}", tagPath);
-                    messagingTemplate.convertAndSend(tagPath, PostResponse.from(finalPost));
-                }).start();
-            }
-        });
-
-        return finalPost;
-
+        // 최종 저장
+        return postRepository.save(post);
     }
 
     // 게시글 수정
@@ -207,30 +174,72 @@ public class PostService {
     }
 
 
-    // 게시글 상세 조회 (댓글/이미지까지 모두 포함)
+    // 게시글 상세 조회 (댓글까지 모두 포함)
     @Transactional(readOnly = true)
-    public PostDetailResponse getPostDetail(Long postId,User user) {
+    public PostDetailResponse getPostDetail(User user, String slug, Long postId) {
         Post post = postRepository.findWithAllById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        PollResponse pollResponse = null;
+        // 로그인한 사용자가 있을 경우, 숨긴 댓글 ID 목록 조회
+        List<Long> hiddenCommentIds = new ArrayList<>();
 
+        if (user != null) {
+            UserFestival userFestival = userFestivalRepository
+                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                    .orElse(null);
+
+            if (userFestival != null) {
+                hiddenCommentIds = hiddenContentRepository
+                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
+            }
+        }
+
+        PollResponse pollResponse = null;
         if (post.getPostType() == PostType.POLL && post.getPoll() != null) {
             pollResponse = pollService.getPollResponse(post.getPoll(), user);
         }
 
-        return PostDetailResponse.from(post, pollResponse);
+        return PostDetailResponse.from(post, pollResponse, hiddenCommentIds);
 
     }
 
 
     @Transactional(readOnly = true)
-    public Slice<PostResponse> getPostListByTag(Pageable pageable, Long tagId) {
+    public PostResponse.SliceResult getPostListByTag(User user, String slug, Pageable pageable, String tagName) {
+        List<Long> hiddenPostIds = new ArrayList<>();
+        UserFestival userFestival = null;
 
-        Slice<Post> posts = postRepository.findAllByTag_IdOrderByCreatedAtAsc(tagId, pageable);
+        if (user != null) {
+            userFestival = userFestivalRepository
+                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                    .orElse(null);
 
-        // 엔티티 → DTO 변환
-        return posts.map(PostResponse::from);
+            if (userFestival != null) {
+                hiddenPostIds = hiddenContentRepository
+                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.POST);
+            }
+        }
+
+        Slice<Post> posts;
+
+        if (tagName == null) {
+            // 전체 게시글 (slug 기준)
+            if (userFestival != null && !hiddenPostIds.isEmpty()) {
+                posts = postRepository.findAllByFestivalSlugAndIdNotInOrderByCreatedAtAsc(slug, hiddenPostIds, pageable);
+            } else {
+                posts = postRepository.findAllByFestivalSlugOrderByCreatedAtAsc(slug, pageable);
+            }
+        } else {
+            if (userFestival != null && !hiddenPostIds.isEmpty()) {
+                posts = postRepository.findAllByFestivalSlugAndTag_Tag_nameAndIdNotInOrderByCreatedAtAsc(
+                        slug, tagName, hiddenPostIds, pageable);
+            } else {
+                posts = postRepository.findAllByFestivalSlugAndTag_Tag_nameOrderByCreatedAtAsc(
+                        slug, tagName, pageable);
+            }
+        }
+        Slice<PostResponse> mapped = posts.map(PostResponse::from);
+        return PostResponse.SliceResult.from(mapped);
     }
 
 

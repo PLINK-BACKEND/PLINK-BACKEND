@@ -8,10 +8,7 @@ import com.plink.backend.feed.entity.Poll;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.user.entity.User;
 import io.micrometer.common.lang.Nullable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,6 +34,7 @@ public class PostDetailResponse {
     private List<CommentResponse> comments; // 댓글 리스트
     private int commentCount;
     private int likeCount;
+
 
     @Nullable
     private PollResponse poll;
@@ -70,30 +68,28 @@ public class PostDetailResponse {
 
 
     public static PostDetailResponse from(Post post, PollResponse pollResponse) {
+        return from(post, pollResponse, List.of()); // 댓글 필터링 없음 → 전체 표시
+    }
+
+    // 숨긴 댓글 필터링용 버전
+    public static PostDetailResponse from(Post post, PollResponse pollResponse, List<Long> hiddenCommentIds) {
+
         return PostDetailResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .author(post.getAuthor().getNickname())
-                .profileImageUrl(post.getAuthor().getUser().getProfileImageUrl())
                 .tagName(post.getTag().getTag_name())
-                .postType(post.getPostType().toString())
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt())
-                .imageUrls(post.getImages() == null ? List.of() :
-                        post.getImages().stream()
-                                .map(Image::getImage_url)
-                                .collect(Collectors.toList()))
-                .comments(post.getComments() == null ? List.of() :
-                        post.getComments().stream()
-                                .map(CommentResponse::from)
-                                .collect(Collectors.toList()))
-                .commentCount(post.getCommentCount())
-                .likeCount(post.getLikeCount())
                 .poll(pollResponse)
+                .createdAt(post.getCreatedAt())
+                .comments(
+                        post.getComments() == null ? List.of() :
+                                post.getComments().stream()
+                                        .filter(c -> hiddenCommentIds == null || !hiddenCommentIds.contains(c.getId()))
+                                        .map(CommentResponse::from)
+                                        .collect(Collectors.toList())
+                )
                 .build();
-
     }
-
 
 }
