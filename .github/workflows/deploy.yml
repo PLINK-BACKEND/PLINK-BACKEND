@@ -10,6 +10,11 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    # 모든 run 명령의 기본 실행 경로를 지정
+    defaults:
+      run:
+        working-directory: ./PLINK-BACKEND
+
     steps:
       # 1. Checkout
       - name: Checkout source code
