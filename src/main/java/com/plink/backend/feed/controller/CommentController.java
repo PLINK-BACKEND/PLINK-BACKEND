@@ -40,7 +40,7 @@ public class CommentController {
     }
 
     // 댓글 수정
-    @PutMapping("/comment/{commentId}")
+    @PatchMapping("/comment/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable String slug,
             @PathVariable Long commentId,

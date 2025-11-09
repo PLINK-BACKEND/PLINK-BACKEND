@@ -58,7 +58,8 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> updatePost(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @ModelAttribute PostUpdateRequest request) {
+            @ModelAttribute PostUpdateRequest request) throws IOException {
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
