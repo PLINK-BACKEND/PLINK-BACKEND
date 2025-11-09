@@ -204,14 +204,11 @@ public class PostService {
     }
 
 
-    // 게시글 전체 조회
     @Transactional(readOnly = true)
-    public PostResponse.SliceResult getPostListByTag(User user, String slug, Pageable pageable, Long tagId) {
-
+    public PostResponse.SliceResult getPostListByTag(User user, String slug, Pageable pageable, String tagName) {
         List<Long> hiddenPostIds = new ArrayList<>();
         UserFestival userFestival = null;
 
-        // 로그인한 사용자라면 UserFestival 조회
         if (user != null) {
             userFestival = userFestivalRepository
                     .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
@@ -225,23 +222,22 @@ public class PostService {
 
         Slice<Post> posts;
 
-        // 태그가 없는 경우 (전체 게시글)
-        if (tagId == null) {
+        if (tagName == null) {
+            // 전체 게시글 (slug 기준)
             if (userFestival != null && !hiddenPostIds.isEmpty()) {
-                posts = postRepository.findAllByIdNotInOrderByCreatedAtAsc(hiddenPostIds, pageable);
+                posts = postRepository.findAllByFestivalSlugAndIdNotInOrderByCreatedAtAsc(slug, hiddenPostIds, pageable);
             } else {
-                posts = postRepository.findAllByOrderByCreatedAtAsc(pageable);
+                posts = postRepository.findAllByFestivalSlugOrderByCreatedAtAsc(slug, pageable);
+            }
+        } else {
+            if (userFestival != null && !hiddenPostIds.isEmpty()) {
+                posts = postRepository.findAllByFestivalSlugAndTag_Tag_nameAndIdNotInOrderByCreatedAtAsc(
+                        slug, tagName, hiddenPostIds, pageable);
+            } else {
+                posts = postRepository.findAllByFestivalSlugAndTag_Tag_nameOrderByCreatedAtAsc(
+                        slug, tagName, pageable);
             }
         }
-        // 태그가 있는 경우 (특정 게시판)
-        else {
-            if (userFestival != null && !hiddenPostIds.isEmpty()) {
-                posts = postRepository.findAllByTag_IdAndIdNotInOrderByCreatedAtAsc(tagId, hiddenPostIds, pageable);
-            } else {
-                posts = postRepository.findAllByTag_IdOrderByCreatedAtAsc(tagId, pageable);
-            }
-        }
-
         Slice<PostResponse> mapped = posts.map(PostResponse::from);
         return PostResponse.SliceResult.from(mapped);
     }

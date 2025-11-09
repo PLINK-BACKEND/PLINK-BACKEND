@@ -1,8 +1,6 @@
 package com.plink.backend.feed.repository;
 
 import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.entity.Tag;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -20,16 +18,23 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {"images"})
     Optional<Post> findById(Long id);
 
-    // 전체 게시글
-    @Query("SELECT p FROM Post p ORDER BY p.createdAt DESC")
-    Slice<Post> findAllByOrderByCreatedAtAsc(Pageable pageable);
+    // ✅ 전체 게시글 (slug 기준)
+    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug ORDER BY p.createdAt ASC")
+    Slice<Post> findAllByFestivalSlugOrderByCreatedAtAsc(
+            @Param("slug") String slug,
+            Pageable pageable
+    );
 
-    // 태그별 게시글
-    @Query("SELECT p FROM Post p WHERE p.tag.id = :tagId ORDER BY p.createdAt DESC")
-    Slice<Post> findAllByTag_IdOrderByCreatedAtAsc(@Param("tagId") Long tagId, Pageable pageable);
+    // ✅ 태그 이름으로 필터링 (slug + tag_name)
+    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug AND p.tag.tag_name = :tagName ORDER BY p.createdAt ASC")
+    Slice<Post> findAllByFestivalSlugAndTag_Tag_nameOrderByCreatedAtAsc(
+            @Param("slug") String slug,
+            @Param("tagName") String tagName,
+            Pageable pageable
+    );
 
     @EntityGraph(attributePaths = {
-            "author.user",  // UserFestival → User
+            "author.user",
             "tag",
             "images",
             "comments",
@@ -38,15 +43,22 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     })
     List<Post> findByAuthor_User_UserId(Long userId);
 
-    // 숨김 제외
-    @Query("SELECT p FROM Post p WHERE p.id NOT IN :ids ORDER BY p.createdAt DESC")
-    Slice<Post> findAllByIdNotInOrderByCreatedAtAsc(@Param("ids") List<Long> ids, Pageable pageable);
+    // ✅ 숨김 제외 (slug 기준)
+    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug AND p.id NOT IN :ids ORDER BY p.createdAt ASC")
+    Slice<Post> findAllByFestivalSlugAndIdNotInOrderByCreatedAtAsc(
+            @Param("slug") String slug,
+            @Param("ids") List<Long> ids,
+            Pageable pageable
+    );
 
-    // 숨김 제외 + 태그별 게시글
-    @Query("SELECT p FROM Post p WHERE p.tag.id = :tagId AND p.id NOT IN :ids ORDER BY p.createdAt DESC")
-    Slice<Post> findAllByTag_IdAndIdNotInOrderByCreatedAtAsc(@Param("tagId") Long tagId,
-                                                             @Param("ids") List<Long> ids,
-                                                             Pageable pageable);
+    // ✅ 숨김 제외 + 태그 이름 필터링
+    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug AND p.tag.tag_name = :tagName AND p.id NOT IN :ids ORDER BY p.createdAt ASC")
+    Slice<Post> findAllByFestivalSlugAndTag_Tag_nameAndIdNotInOrderByCreatedAtAsc(
+            @Param("slug") String slug,
+            @Param("tagName") String tagName,
+            @Param("ids") List<Long> ids,
+            Pageable pageable
+    );
 
     // 상세 조회
     @EntityGraph(attributePaths = {
@@ -60,6 +72,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 인기글
     @Query("SELECT p FROM Post p " +
-            "ORDER BY (p.likeCount + p.commentCount) DESC, p.createdAt DESC")
+            "ORDER BY (p.likeCount + p.commentCount) ASC, p.createdAt ASC")
     List<Post> findTop3PopularPosts(Pageable pageable);
 }
