@@ -23,6 +23,8 @@ public class GameWebSocketConfig implements WebSocketConfigurer {
         registry.addHandler(gameWebSocketHandler, "/ws/game")
                 .setAllowedOriginPatterns("*");
                 //.withSockJS(); // 포스트맨 테스트할 때는 필요했음!
+
+
     }
 
     // 콘솔 테스트용
