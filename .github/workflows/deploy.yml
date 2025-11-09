@@ -45,7 +45,7 @@ jobs:
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
           source: |
-            build/libs/*.jar
+            backend/build/libs/*.jar
             Dockerfile
           target: "/home/ubuntu/app"
 
