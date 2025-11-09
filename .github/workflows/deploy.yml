@@ -27,7 +27,7 @@ jobs:
 
       # 3. Gradle 빌드 (테스트 제외)
       - name: Build with Gradle
-        run: chmod +x gradlew && ./gradlew clean build -x test
+        run: chmod +x gradlew && ./gradlew clean bootJar -x test
       # jar 파일이 실제로 생겼는지 출력 (로그)
       - name: List build outputs
         run: ls -R build/libs || echo "build/libs is empty"
