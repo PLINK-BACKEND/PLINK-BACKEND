@@ -14,14 +14,6 @@ jobs:
 
     env:
       SPRING_PROFILES_ACTIVE: prod
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USERNAME: ${{ secrets.DB_USERNAME }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      S3_BUCKET: ${{ secrets.S3_BUCKET }}
-      S3_BASE_URL: ${{ secrets.S3_BASE_URL }}
-      S3_REGION: ${{ secrets.S3_REGION }}
 
     steps:
       # 1️⃣ 리포지토리 코드 체크아웃
@@ -67,15 +59,26 @@ jobs:
             echo "✅ 현재 디렉토리 확인:" && pwd
             echo "✅ 파일 목록:" && ls -lh
 
+            echo "🧹 기존 컨테이너 정리..."
             docker stop myapp || true
             docker rm myapp || true
             docker rmi myapp:latest || true
 
-            echo "✅ Docker 빌드 시작..."
+            echo "🐳 Docker 빌드 시작..."
             docker build -t myapp .
 
-            echo "✅ 컨테이너 실행..."
-            docker run -d -p 8080:8080 --name myapp --restart always myapp
+            echo "🚀 새 컨테이너 실행..."
+            docker run -d -p 8080:8080 --name myapp --restart always \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DB_HOST='${{ secrets.DB_HOST }}' \
+              -e DB_PORT='${{ secrets.DB_PORT }}' \
+              -e DB_NAME='${{ secrets.DB_NAME }}' \
+              -e DB_USERNAME='${{ secrets.DB_USERNAME }}' \
+              -e DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+              -e S3_BUCKET='${{ secrets.S3_BUCKET }}' \
+              -e S3_BASE_URL='${{ secrets.S3_BASE_URL }}' \
+              -e S3_REGION='${{ secrets.S3_REGION }}' \
+              myapp
 
             echo "✅ 실행 중인 컨테이너 확인:"
             docker ps -a
