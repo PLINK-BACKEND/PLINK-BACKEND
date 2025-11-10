@@ -1,5 +1,5 @@
 # Java 17 기반 이미지 사용
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jdk-slim-bullseye
 
 # 빌드된 JAR 파일을 컨테이너 내부로 복사
 ARG JAR_FILE=*.jar
