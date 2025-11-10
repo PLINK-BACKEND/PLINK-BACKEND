@@ -2,8 +2,8 @@
 FROM openjdk:17-jdk-slim
 
 # 빌드된 JAR 파일을 컨테이너 내부로 복사
-ARG JAR_FILE=build/libs/*.jar
-COPY ${JAR_FILE} /app/
+ARG JAR_FILE=*.jar
+COPY ${JAR_FILE} app.jar
 
-# 컨테이너가 실행될 때 JAR 실행
+# 컨테이너 실행 시 JAR 실행
 ENTRYPOINT ["java", "-jar", "/app.jar"]
