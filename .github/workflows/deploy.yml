@@ -68,16 +68,16 @@ jobs:
             docker build -t myapp .
 
             echo "🚀 새 컨테이너 실행..."
-            docker run -d -p 8080:8080 --name myapp --restart always \
+            docker run -d --network host --name myapp --restart always \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e DB_HOST='${{ secrets.DB_HOST }}' \
-              -e DB_PORT='${{ secrets.DB_PORT }}' \
-              -e DB_NAME='${{ secrets.DB_NAME }}' \
-              -e DB_USERNAME='${{ secrets.DB_USERNAME }}' \
-              -e DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
-              -e S3_BUCKET='${{ secrets.S3_BUCKET }}' \
-              -e S3_BASE_URL='${{ secrets.S3_BASE_URL }}' \
-              -e S3_REGION='${{ secrets.S3_REGION }}' \
+              -e DB_HOST=${{ secrets.DB_HOST }} \
+              -e DB_PORT=${{ secrets.DB_PORT }} \
+              -e DB_NAME=${{ secrets.DB_NAME }} \
+              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
+              -e S3_BASE_URL=${{ secrets.S3_BASE_URL }} \
+              -e S3_REGION=${{ secrets.S3_REGION }} \
               myapp
 
             echo "✅ 실행 중인 컨테이너 확인:"
