@@ -5,6 +5,7 @@ import com.plink.backend.main.service.MainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,8 +20,7 @@ public class MainController {
 
     // 인기글 top3 조회
     @GetMapping("/popular")
-    public ResponseEntity<List<PostResponse>> getPopularPosts() {
-        List<PostResponse> response = mainService.getPopularPosts();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<PostResponse>> getPopularPosts(@PathVariable String slug) {
+        return ResponseEntity.ok(mainService.getPopularPosts(slug));
     }
 }

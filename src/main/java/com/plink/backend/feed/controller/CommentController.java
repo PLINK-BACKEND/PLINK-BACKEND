@@ -29,7 +29,7 @@ public class CommentController {
             @PathVariable String slug,
             @PathVariable Long postId,
             @AuthenticationPrincipal User user,
-            @RequestBody CommentRequest request
+            @ModelAttribute CommentRequest request
     ) {
         if (user == null) {
             throw new IllegalStateException("로그인이 필요합니다.");
@@ -44,7 +44,7 @@ public class CommentController {
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable String slug,
             @PathVariable Long commentId,
-            @RequestBody CommentRequest request
+            @ModelAttribute CommentRequest request
     ){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

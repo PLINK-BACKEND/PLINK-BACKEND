@@ -70,10 +70,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     })
     Optional<Post> findWithAllById(Long id);
 
+
     // 인기글
-    @Query("SELECT p FROM Post p " +
-            "ORDER BY (p.likeCount + p.commentCount) ASC, p.createdAt ASC")
-    List<Post> findTop3PopularPosts(Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug " +
+            "ORDER BY (p.likeCount + p.commentCount) DESC, p.createdAt DESC")
+    List<Post> findPopularPostsBySlug(@Param("slug") String slug, Pageable pageable);
 
     // 제목 또는 내용에 검색어가 포함
     @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug " +
@@ -91,6 +92,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                                              @Param("tagName") String tagName,
                                              @Param("keyword") String keyword,
                                              Pageable pageable);
+
 
 
 }
