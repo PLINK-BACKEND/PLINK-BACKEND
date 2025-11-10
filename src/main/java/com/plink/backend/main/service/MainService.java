@@ -18,10 +18,9 @@ public class MainService {
     private final PostRepository postRepository;
 
     @Transactional(readOnly = true)
-    public List<PostResponse> getPopularPosts(){
+    public List<PostResponse> getPopularPosts(String slug) {
         Pageable top3 = PageRequest.of(0, 3);
-        List<Post> posts = postRepository.findTop3PopularPosts(top3);
-
+        List<Post> posts = postRepository.findPopularPostsBySlug(slug, top3);
         return posts.stream()
                 .map(PostResponse::from)
                 .toList();
