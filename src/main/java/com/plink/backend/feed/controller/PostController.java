@@ -58,7 +58,8 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> updatePost(
             @PathVariable String slug,
             @PathVariable Long postId,
-            @ModelAttribute PostUpdateRequest request) {
+            @ModelAttribute PostUpdateRequest request) throws IOException {
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -105,11 +106,23 @@ public class PostController {
     public ResponseEntity<PostResponse.SliceResult> getPostListByTag(
             @AuthenticationPrincipal User user,
             @PathVariable String slug,
-            @RequestParam(required = false) String tagName,
+            @RequestParam(required = false) String tag,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        PostResponse.SliceResult result = postService.getPostListByTag(user, slug, pageable, tagName);
+        PostResponse.SliceResult result = postService.getPostListByTag(user, slug, pageable, tag);
         return ResponseEntity.ok(result);
 
+    }
+
+    // 게시판 검색
+    @GetMapping("/search")
+    public ResponseEntity<PostResponse.SliceResult> searchPosts(
+            @PathVariable String slug,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String tag,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        PostResponse.SliceResult result = postService.searchPostsBySlug(slug, q, tag, pageable);
+        return ResponseEntity.ok(result);
     }
 }

@@ -30,7 +30,7 @@ public class PostDetailResponse {
     private String tagName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<String> imageUrls;           // S3에서 변환된 URL
+    private List<ImageInfo> images;          // S3에서 변환된 URL
     private List<CommentResponse> comments; // 댓글 리스트
     private int commentCount;
     private int likeCount;
@@ -52,9 +52,9 @@ public class PostDetailResponse {
                 .postType(post.getPostType().toString())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
-                .imageUrls(post.getImages() == null ? List.of() :
+                .images(post.getImages() == null ? List.of() :
                         post.getImages().stream()
-                                .map(Image::getImage_url)
+                                .map(img -> new ImageInfo(img.getId(), img.getImageUrl()))
                                 .collect(Collectors.toList()))
                 .comments(post.getComments() == null ? List.of() :
                         post.getComments().stream()
@@ -82,14 +82,28 @@ public class PostDetailResponse {
                 .tagName(post.getTag().getTag_name())
                 .poll(pollResponse)
                 .createdAt(post.getCreatedAt())
+                .images(post.getImages() == null ? List.of() :
+                        post.getImages().stream()
+                                .map(img -> new ImageInfo(img.getId(), img.getImageUrl()))
+                                .collect(Collectors.toList()))
                 .comments(
                         post.getComments() == null ? List.of() :
                                 post.getComments().stream()
                                         .filter(c -> hiddenCommentIds == null || !hiddenCommentIds.contains(c.getId()))
                                         .map(CommentResponse::from)
                                         .collect(Collectors.toList())
+
                 )
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .build();
     }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ImageInfo {
+        private Long id;
+        private String imageUrl;
+    }
 }
