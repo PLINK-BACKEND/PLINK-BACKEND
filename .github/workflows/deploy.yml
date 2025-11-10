@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - develop
 
 permissions:
   contents: write
@@ -36,9 +35,7 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
-          source: |
-            ./build/libs/*.jar
-            Dockerfile
+          source: "build/libs/*.jar,Dockerfile"
           target: "/home/ubuntu/app"
 
       # 5. EC2에서 Docker 빌드 및 실행
@@ -50,21 +47,10 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             cd /home/ubuntu/app
-            rm -rf build libs *.jar || true  # 불필요한 이전 빌드파일 정리
+            docker stop myapp || true
+            docker rm myapp || true
+            docker rmi myapp:latest || true
 
-            if [ "${{ github.ref_name }}" == "main" ]; then
-              APP_NAME=myapp-main
-              HOST_PORT=8080
-            else
-              APP_NAME=myapp-dev
-              HOST_PORT=8081
-            fi
-
-            echo "Deploying branch: ${{ github.ref_name }} -> container: $APP_NAME on port $HOST_PORT"
-
-            docker stop $APP_NAME || true
-            docker rm $APP_NAME || true
-            docker rmi $APP_NAME:latest || true
-
-            docker build -t $APP_NAME .
-            docker run -d -p $HOST_PORT:8080 --name $APP_NAME --restart always $APP_NAME
+            # Dockerfile이 app 폴더 안에 있다고 가정
+            docker build -t myapp .
+            docker run -d -p 8080:8080 --name myapp --restart always myapp
