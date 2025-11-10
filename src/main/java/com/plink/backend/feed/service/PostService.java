@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -242,5 +243,24 @@ public class PostService {
         return PostResponse.SliceResult.from(mapped);
     }
 
+    // 검색
+    @Transactional(readOnly = true)
+    public PostResponse.SliceResult searchPostsBySlug(String slug, String keyword, String tagName, Pageable pageable) {
+        Slice<Post> posts;
+
+        if (tagName != null) {
+            // 특정 게시판(태그) 내에서 검색
+            posts = postRepository.searchBySlugAndTagAndKeyword(slug, tagName, keyword, pageable);
+        } else {
+            // 전체 게시글 중에서 검색
+            posts = postRepository.searchBySlugAndKeyword(slug, keyword, pageable);
+        }
+
+        // Post → PostResponse 매핑
+        Slice<PostResponse> mapped = posts.map(PostResponse::from);
+
+        // 동일한 방식으로 SliceResult 변환
+        return PostResponse.SliceResult.from(mapped);
+    }
 
 }
