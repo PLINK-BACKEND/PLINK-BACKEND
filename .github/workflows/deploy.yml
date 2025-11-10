@@ -12,24 +12,41 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      S3_BASE_URL: ${{ secrets.S3_BASE_URL }}
+      S3_REGION: ${{ secrets.S3_REGION }}
+
     steps:
-      # 1. Checkout source
+      # 1️⃣ 리포지토리 코드 체크아웃
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      # 2. JDK 설정
+      # 2️⃣ JDK 17 세팅
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Gradle 빌드 (테스트 제외)
+      # 3️⃣ Gradle 빌드 (테스트 제외)
       - name: Build with Gradle
-        run: chmod +x gradlew && ./gradlew clean build -x test
+        run: |
+          chmod +x gradlew
+          ./gradlew clean bootJar -x test
 
-      # 4. EC2로 jar 전송
-      - name: Copy JAR to EC2
+      # 4️⃣ 빌드 결과 확인용 (디버깅 시 유용)
+      - name: Verify build output
+        run: ls -lh build/libs
+
+      # 5️⃣ EC2로 jar와 Dockerfile 전송
+      - name: Copy JAR and Dockerfile to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
@@ -38,7 +55,7 @@ jobs:
           source: "build/libs/*.jar,Dockerfile"
           target: "/home/ubuntu/app"
 
-      # 5. EC2에서 Docker 빌드 및 실행
+      # 6️⃣ EC2에서 Docker 빌드 및 컨테이너 실행
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -47,10 +64,18 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             cd /home/ubuntu/app
+            echo "✅ 현재 디렉토리 확인:" && pwd
+            echo "✅ 파일 목록:" && ls -lh
+
             docker stop myapp || true
             docker rm myapp || true
             docker rmi myapp:latest || true
 
-            # Dockerfile이 app 폴더 안에 있다고 가정
+            echo "✅ Docker 빌드 시작..."
             docker build -t myapp .
+
+            echo "✅ 컨테이너 실행..."
             docker run -d -p 8080:8080 --name myapp --restart always myapp
+
+            echo "✅ 실행 중인 컨테이너 확인:"
+            docker ps -a

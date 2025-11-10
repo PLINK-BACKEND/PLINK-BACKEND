@@ -39,5 +39,6 @@ out/
 ### 환경 변수 ###
 .env
 
-src/main/resources/application.yml
-**/application.yml
+# src/main/resources/application.yml
+# **/application.yml
+src/main/resources/application-local.yml
