@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class PostResponse {
     private String tagName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<String> imageUrls;
+    private List<ImageInfo> images;
     private int commentCount;
     private int likeCount;
     private PollResponse poll;
@@ -46,14 +47,22 @@ public class PostResponse {
                 .tagName(post.getTag().getTag_name())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
-                .imageUrls(post.getImages() == null ? List.of() :
+                .images(post.getImages() == null ? List.of() :
                         post.getImages().stream()
-                                .map(Image::getImage_url)
+                                .map(img -> new PostResponse.ImageInfo(img.getId(), img.getImageUrl()))
                                 .collect(Collectors.toList()))
                 .commentCount(post.getCommentCount())
                 .likeCount(post.getLikeCount())
                 .poll(post.getPoll() == null ? null : PollResponse.from(post.getPoll(), null))
                 .build();
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ImageInfo {
+        private Long id;
+        private String imageUrl;
     }
 
     @Getter
@@ -74,3 +83,4 @@ public class PostResponse {
         }
     }
 }
+

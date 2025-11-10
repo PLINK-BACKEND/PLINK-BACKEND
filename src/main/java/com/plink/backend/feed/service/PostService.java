@@ -46,12 +46,13 @@ public class PostService {
     private final UserFestivalRepository userFestivalRepository;
     private final HiddenContentRepository hiddenContentRepository;
     private final PollService pollService;
+    private final ImageService imageService;
     private final UserService userService;
 
     @Transactional
     // 게시글 작성하기
 
-    public Post createPost(User author, PostCreateRequest request, String slug) throws IOException {
+    public Post createPost(User author, PostCreateRequest request, String slug)  throws IOException {
 
         // 행사 검증
         Festival festival = festivalRepository.findBySlug(slug)
@@ -70,11 +71,6 @@ public class PostService {
         if (request.getPostType() == PostType.NORMAL &&
                 (request.getContent() == null || request.getContent().isBlank())) {
             throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
-        }
-
-        // 이미지 개수 검증
-        if (request.getImages() != null && request.getImages().size() > 3) {
-            throw new IllegalArgumentException("이미지는 최대 3장까지 업로드 가능합니다.");
         }
 
         // Post 생성 및 1차 저장
@@ -97,20 +93,8 @@ public class PostService {
             postRepository.save(post);
         }
 
-        // 이미지 업로드 처리
         if (request.getImages() != null && !request.getImages().isEmpty()) {
-            for (MultipartFile file : request.getImages()) {
-                S3UploadResult uploadResult = s3Service.upload(file, "posts");
-
-                Image image = Image.builder()
-                        .post(post)
-                        .s3key(uploadResult.getKey())
-                        .originalName(uploadResult.getOriginalFilename())
-                        .image_url(uploadResult.getUrl())
-                        .build();
-
-                post.getImages().add(image);
-            }
+            imageService.saveImages(post.getId(), request.getImages());
         }
 
         // 최종 저장
@@ -119,7 +103,7 @@ public class PostService {
 
     // 게시글 수정
     @Transactional
-    public Post updatePost(User author,PostUpdateRequest request,Long postId){
+    public Post updatePost(User author,PostUpdateRequest request,Long postId)throws IOException {
         Post post = postRepository.findById(postId)
                 .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
@@ -144,6 +128,7 @@ public class PostService {
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
             post.updateTag(tag);
         }
+
 
         return post;
     }
