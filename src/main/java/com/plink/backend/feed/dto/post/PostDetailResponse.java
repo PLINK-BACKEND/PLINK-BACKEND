@@ -32,6 +32,7 @@ public class PostDetailResponse {
     private LocalDateTime updatedAt;
     private List<ImageInfo> images;          // S3에서 변환된 URL
     private List<CommentResponse> comments; // 댓글 리스트
+    private List<Long> hiddenCommentIds;
     private int commentCount;
     private int likeCount;
 
@@ -39,9 +40,17 @@ public class PostDetailResponse {
     @Nullable
     private PollResponse poll;
 
-    // 엔티티 -> DTO 변환 편의 메서드
     // 게시글 상세보기
+
     public static PostDetailResponse from(Post post) {
+        return from(post, List.of());
+    }
+    public static PostDetailResponse from(Post post, List<Long> hiddenCommentIds) {
+        List<CommentResponse> visibleComments = post.getComments().stream()
+                .filter(comment -> !hiddenCommentIds.contains(comment.getId()))
+                .map(CommentResponse::from)
+                .collect(Collectors.toList());
+
         return PostDetailResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -56,10 +65,7 @@ public class PostDetailResponse {
                         post.getImages().stream()
                                 .map(img -> new ImageInfo(img.getId(), img.getImageUrl()))
                                 .collect(Collectors.toList()))
-                .comments(post.getComments() == null ? List.of() :
-                        post.getComments().stream()
-                                .map(CommentResponse::from)
-                                .collect(Collectors.toList()))
+                .comments(visibleComments)
                 .commentCount(post.getCommentCount())
                 .likeCount(post.getLikeCount())
                 .build();

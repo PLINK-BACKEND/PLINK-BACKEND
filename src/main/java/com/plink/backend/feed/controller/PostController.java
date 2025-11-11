@@ -1,12 +1,16 @@
 package com.plink.backend.feed.controller;
 
 import com.plink.backend.feed.dto.post.PostResponse;
+import com.plink.backend.feed.entity.ReportTargetType;
+import com.plink.backend.feed.repository.HiddenContentRepository;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.feed.entity.Post;
 import com.plink.backend.feed.service.PostService;
+import com.plink.backend.user.entity.UserFestival;
+import com.plink.backend.user.repository.UserFestivalRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +30,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
+import java.util.List;
 
 
 @Slf4j
@@ -34,6 +39,8 @@ import java.io.IOException;
 @RequestMapping("/{slug}/posts")
 public class PostController {
     private final PostService postService;
+    private final HiddenContentRepository hiddenContentRepository;
+    private final UserFestivalRepository userFestivalRepository;
 
     // 게시글 작성 (POST 요청)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -69,7 +76,20 @@ public class PostController {
         User user = (User) authentication.getPrincipal();
 
         Post updated = postService.updatePost(user, request, postId);
-        PostDetailResponse response = PostDetailResponse.from(updated);
+
+        List<Long> hiddenCommentIds = List.of();
+        if (user != null) {
+            UserFestival userFestival = userFestivalRepository
+                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                    .orElse(null);
+
+            if (userFestival != null) {
+                hiddenCommentIds = hiddenContentRepository
+                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
+            }
+        }
+
+        PostDetailResponse response = PostDetailResponse.from(updated, hiddenCommentIds);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -101,28 +121,19 @@ public class PostController {
 
 
 
-    // 게시판별 전체 조회
+    // 게시판별 전체 조회 + 검색
     @GetMapping
     public ResponseEntity<PostResponse.SliceResult> getPostListByTag(
             @AuthenticationPrincipal User user,
             @PathVariable String slug,
             @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String keyword,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        PostResponse.SliceResult result = postService.getPostListByTag(user, slug, pageable, tag);
+        PostResponse.SliceResult result = postService.getPostListByTag(user, slug, pageable, tag, keyword);
         return ResponseEntity.ok(result);
 
     }
 
-    // 게시판 검색
-    @GetMapping("/search")
-    public ResponseEntity<PostResponse.SliceResult> searchPosts(
-            @PathVariable String slug,
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String tag,
-            @PageableDefault(size = 20) Pageable pageable) {
 
-        PostResponse.SliceResult result = postService.searchPostsBySlug(slug, q, tag, pageable);
-        return ResponseEntity.ok(result);
-    }
 }
