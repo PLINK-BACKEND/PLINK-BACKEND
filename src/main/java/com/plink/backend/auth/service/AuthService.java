@@ -55,11 +55,6 @@ public class AuthService {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
 
-        // 행사 내 닉네임 중복 방지
-        if (userFestivalRepository.existsByFestivalSlugAndNickname(request.getSlug(), request.getNickname())) {
-            throw new CustomException(HttpStatus.CONFLICT, "이 행사의 닉네임은 이미 사용 중입니다.");
-        }
-
         // 프로필 업로드
         String imageUrl = null;
         if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
@@ -92,15 +87,21 @@ public class AuthService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // UserFestival 생성
-        UserFestival festival = UserFestival.builder()
-                .user(user)
-                .festivalSlug(slug)
-                .nickname(request.getNickname())
-                .joinedAt(LocalDateTime.now())
-                .build();
+        // slug가 있을 때만 UserFestival 생성
+        UserFestival festival = null;
+        if (slug != null) {
+            if (userFestivalRepository.existsByFestivalSlugAndNickname(slug, request.getNickname())) {
+                throw new CustomException(HttpStatus.CONFLICT, "이 닉네임은 이미 사용 중입니다.");
+            }
+            festival = UserFestival.builder()
+                    .user(user)
+                    .festivalSlug(slug)
+                    .nickname(request.getNickname())
+                    .joinedAt(LocalDateTime.now())
+                    .build();
+            user.addFestival(festival);
+        }
 
-        user.addFestival(festival); // 양방향 연결
         userRepository.save(user); // Cascade -> festival도 함께 저장됨
         return new UserResponse(user, festival);
     }
