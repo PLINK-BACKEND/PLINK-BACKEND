@@ -28,11 +28,9 @@ public class MainService {
     @Transactional(readOnly = true)
     public MainResponse getPopularPosts(User user, String slug) {
 
-
         List<Long> hiddenPostIds = List.of(); // 기본값
 
         // 로그인한 경우만 숨김(신고) 게시글 목록 조회
-
         if (user != null) {
             Optional<UserFestival> optionalFestival =
                     userFestivalRepository.findByUser_UserIdAndFestivalSlug(user.getUserId(), slug);
@@ -52,19 +50,15 @@ public class MainService {
 
         Post popularPoll = popularPolls.isEmpty() ? null : popularPolls.get(0);
 
-        // 인기 게시글 3개 (POLL 포함 가능하나 위에서 뽑은 앙케이트 제외)
-        List<Long> excludeIds = new ArrayList<>(hiddenPostIds);
-        if (popularPoll != null) excludeIds.add(popularPoll.getId());
-
+        // 인기 게시글 3개
         List<Post> popularPosts = postRepository.findPopularPosts(
-                slug, null,
-                excludeIds.isEmpty() ? null : excludeIds,
+                slug, PostType.NORMAL,
+                hiddenPostIds.isEmpty() ? null : hiddenPostIds,
                 PageRequest.of(0, 3)
         );
 
         // DTO 변환 후 응답
         return MainResponse.from(popularPoll, popularPosts);
-
     }
 }
 
