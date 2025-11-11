@@ -1,6 +1,7 @@
-package com.plink.backend.feed.repository.post;
+package com.plink.backend.feed.repository;
 
-import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.entity.Post;
+import com.plink.backend.feed.entity.PostType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -18,21 +19,30 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {"images"})
     Optional<Post> findById(Long id);
 
-    // 전체 게시글 (slug 기준)
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug ORDER BY p.createdAt ASC")
-    Slice<Post> findAllByFestivalSlugOrderByCreatedAtAsc(
-            @Param("slug") String slug,
-            Pageable pageable
-    );
-
-    // 태그 이름으로 필터링 (slug + tag_name)
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug AND p.tag.tag_name = :tagName ORDER BY p.createdAt ASC")
-    Slice<Post> findAllByFestivalSlugAndTag_Tag_nameOrderByCreatedAtAsc(
+    // 전체 게시글 (slug + tag_name + keyword + hiddenId 기준)
+    @Query("""
+    SELECT p
+    FROM Post p
+    WHERE p.festival.slug = :slug
+      AND (:tagName IS NULL OR p.tag.tag_name = :tagName)
+      AND (
+            :keyword IS NULL OR
+            LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+            LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+      )
+      AND (COALESCE(:hiddenIds, NULL) IS NULL OR p.id NOT IN :hiddenIds)
+    ORDER BY p.createdAt ASC 
+""")
+    Slice<Post> findPostsFiltered(
             @Param("slug") String slug,
             @Param("tagName") String tagName,
+            @Param("keyword") String keyword,
+            @Param("hiddenIds") List<Long> hiddenIds,
             Pageable pageable
     );
 
+
+    // 내가 쓴 글 보기
     @EntityGraph(attributePaths = {
             "author.user",
             "tag",
@@ -43,22 +53,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     })
     List<Post> findByAuthor_User_UserId(Long userId);
 
-    // 숨김 제외 (slug 기준)
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug AND p.id NOT IN :ids ORDER BY p.createdAt ASC")
-    Slice<Post> findAllByFestivalSlugAndIdNotInOrderByCreatedAtAsc(
-            @Param("slug") String slug,
-            @Param("ids") List<Long> ids,
-            Pageable pageable
-    );
 
-    // 숨김 제외 + 태그 이름 필터링
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug AND p.tag.tag_name = :tagName AND p.id NOT IN :ids ORDER BY p.createdAt ASC")
-    Slice<Post> findAllByFestivalSlugAndTag_Tag_nameAndIdNotInOrderByCreatedAtAsc(
-            @Param("slug") String slug,
-            @Param("tagName") String tagName,
-            @Param("ids") List<Long> ids,
-            Pageable pageable
-    );
 
     // 상세 조회
     @EntityGraph(attributePaths = {
@@ -72,26 +67,19 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
 
     // 인기글
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug " +
-            "ORDER BY (p.likeCount + p.commentCount) DESC, p.createdAt DESC")
-    List<Post> findPopularPostsBySlug(@Param("slug") String slug, Pageable pageable);
-
-    // 제목 또는 내용에 검색어가 포함
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug " +
-            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Slice<Post> searchBySlugAndKeyword(@Param("slug") String slug,
-                                       @Param("keyword") String keyword,
-                                       Pageable pageable);
-    // 태그로 필터링 + 검색어
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug " +
-            "AND p.tag.tag_name = :tagName " +
-            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Slice<Post> searchBySlugAndTagAndKeyword(@Param("slug") String slug,
-                                             @Param("tagName") String tagName,
-                                             @Param("keyword") String keyword,
-                                             Pageable pageable);
+    @Query("""
+    SELECT p FROM Post p
+    WHERE p.festival.slug = :slug
+      AND (:postType IS NULL OR p.postType = :postType)
+      AND (COALESCE(:hiddenIds, NULL) IS NULL OR p.id NOT IN :hiddenIds)
+    ORDER BY (p.likeCount + p.commentCount) ASC , p.createdAt ASC 
+""")
+    List<Post> findPopularPosts(
+            @Param("slug") String slug,
+            @Param("postType") PostType postType,
+            @Param("hiddenIds") List<Long> hiddenIds,
+            Pageable pageable
+    );
 
 
 
