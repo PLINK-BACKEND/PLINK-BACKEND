@@ -1,7 +1,7 @@
-package com.plink.backend.feed.repository;
+package com.plink.backend.feed.repository.post;
 
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.entity.PostType;
+import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.entity.post.PostType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -41,7 +41,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             Pageable pageable
     );
 
-
     // 내가 쓴 글 보기
     @EntityGraph(attributePaths = {
             "author.user",
@@ -53,8 +52,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     })
     List<Post> findByAuthor_User_UserId(Long userId);
 
-
-
     // 상세 조회
     @EntityGraph(attributePaths = {
             "author",
@@ -64,7 +61,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "comments.author"
     })
     Optional<Post> findWithAllById(Long id);
-
 
     // 인기글
     @Query("""
@@ -80,7 +76,4 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("hiddenIds") List<Long> hiddenIds,
             Pageable pageable
     );
-
-
-
 }

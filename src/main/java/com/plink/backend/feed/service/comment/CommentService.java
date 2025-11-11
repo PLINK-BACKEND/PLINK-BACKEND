@@ -79,7 +79,6 @@ public class CommentService {
         comment.getPost().decreaseCommentCount();
     }
 
-
     // 댓글 조회
     @Transactional
     public List<CommentResponse> getCommentsByPost(Long postId) {

@@ -1,32 +1,26 @@
 package com.plink.backend.main.service;
 
-import com.plink.backend.feed.dto.post.PostResponse;
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.entity.PostType;
-import com.plink.backend.feed.entity.ReportTargetType;
-import com.plink.backend.feed.repository.HiddenContentRepository;
-import com.plink.backend.feed.repository.PostRepository;
+import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.entity.post.PostType;
+import com.plink.backend.feed.entity.report.ReportTargetType;
+import com.plink.backend.feed.repository.report.HiddenContentRepository;
+import com.plink.backend.feed.repository.post.PostRepository;
 import com.plink.backend.main.dto.MainResponse;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
-import com.plink.backend.user.repository.UserRepository;
-import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MainService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
     private final UserFestivalRepository userFestivalRepository;
     private final HiddenContentRepository hiddenContentRepository;
 
@@ -73,3 +67,4 @@ public class MainService {
 
     }
 }
+

@@ -1,14 +1,14 @@
-package com.plink.backend.feed.controller;
+package com.plink.backend.feed.controller.post;
 
 import com.plink.backend.feed.dto.post.PostResponse;
-import com.plink.backend.feed.entity.ReportTargetType;
-import com.plink.backend.feed.repository.HiddenContentRepository;
+import com.plink.backend.feed.entity.report.ReportTargetType;
+import com.plink.backend.feed.repository.report.HiddenContentRepository;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.dto.post.PostUpdateRequest;
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.service.PostService;
+import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.service.post.PostService;
 import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
 import jakarta.servlet.http.HttpServletRequest;

@@ -74,15 +74,13 @@ public class PollService {
                 .option(option)
                 .build();
 
-
         // 저장
         pollVoteRepository.save(vote);
-
-
         Long selectedOptionId = option.getId();
 
         return PollResponse.from(poll, selectedOptionId);
     }
+
 
     @Transactional(readOnly = true)
     public PollResponse getPollResponse(Poll poll, User user) {

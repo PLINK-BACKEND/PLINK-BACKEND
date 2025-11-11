@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-
 public interface PostLikeRepository extends JpaRepository<PostLike, Long>{
 
     boolean existsByUserAndPost(UserFestival user, Post post);
