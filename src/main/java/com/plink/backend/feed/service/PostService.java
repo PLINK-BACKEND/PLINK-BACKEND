@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -163,89 +164,59 @@ public class PostService {
     // 게시글 상세 조회 (댓글까지 모두 포함)
     @Transactional(readOnly = true)
     public PostDetailResponse getPostDetail(User user, String slug, Long postId) {
+
+        // 비회원인 경우
+        if (user == null){
+            Post post = postRepository.findWithAllById(postId)
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+            return PostDetailResponse.from(post);
+
+        }
+
+        // 로그인한 사용자가 있을 경우, 숨긴 목록 조회
+        UserFestival userFestival = userFestivalRepository
+                .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 사용자를 찾을 수 없습니다."));
+
+        List<Long> hiddenPostIds = hiddenContentRepository
+                .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.POST);
+        List<Long> hiddenCommentIds = hiddenContentRepository
+                .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
+
+        if (hiddenPostIds.contains(postId)) {
+            throw new CustomException(HttpStatus.FORBIDDEN, "신고하여 숨긴 게시글은 볼 수 없습니다.");
+        }
+
         Post post = postRepository.findWithAllById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
 
-        // 로그인한 사용자가 있을 경우, 숨긴 댓글 ID 목록 조회
-        List<Long> hiddenCommentIds = new ArrayList<>();
-
-        if (user != null) {
-            UserFestival userFestival = userFestivalRepository
-                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
-                    .orElse(null);
-
-            if (userFestival != null) {
-                hiddenCommentIds = hiddenContentRepository
-                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
-            }
-        }
-
-        PollResponse pollResponse = null;
-        if (post.getPostType() == PostType.POLL && post.getPoll() != null) {
-            pollResponse = pollService.getPollResponse(post.getPoll(), user);
-        }
-
-        return PostDetailResponse.from(post, pollResponse, hiddenCommentIds);
-
+        return PostDetailResponse.from(post,hiddenCommentIds);
     }
 
 
+    // 게시글 전체 조회
     @Transactional(readOnly = true)
-    public PostResponse.SliceResult getPostListByTag(User user, String slug, Pageable pageable, String tagName) {
-        List<Long> hiddenPostIds = new ArrayList<>();
-        UserFestival userFestival = null;
+    public PostResponse.SliceResult getPostListByTag(User user, String slug, Pageable pageable, String tagName, String keyword) {
+        List<Long> hiddenPostIds = null;
 
+        // 로그인을 한 사람인 지 아닌 지 확인
         if (user != null) {
-            userFestival = userFestivalRepository
-                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
-                    .orElse(null);
+            Optional<UserFestival> optionalFestival =
+                    userFestivalRepository.findByUser_UserIdAndFestivalSlug(user.getUserId(), slug);
 
-            if (userFestival != null) {
+            if (optionalFestival.isPresent()) {
                 hiddenPostIds = hiddenContentRepository
-                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.POST);
+                        .findTargetIdsByUserFestivalAndTargetType(optionalFestival.get(), ReportTargetType.POST);
             }
         }
 
-        Slice<Post> posts;
+        Slice<Post> posts = postRepository.findPostsFiltered(
+                slug, tagName,keyword,hiddenPostIds,pageable
+        );
 
-        if (tagName == null) {
-            // 전체 게시글 (slug 기준)
-            if (userFestival != null && !hiddenPostIds.isEmpty()) {
-                posts = postRepository.findAllByFestivalSlugAndIdNotInOrderByCreatedAtAsc(slug, hiddenPostIds, pageable);
-            } else {
-                posts = postRepository.findAllByFestivalSlugOrderByCreatedAtAsc(slug, pageable);
-            }
-        } else {
-            if (userFestival != null && !hiddenPostIds.isEmpty()) {
-                posts = postRepository.findAllByFestivalSlugAndTag_Tag_nameAndIdNotInOrderByCreatedAtAsc(
-                        slug, tagName, hiddenPostIds, pageable);
-            } else {
-                posts = postRepository.findAllByFestivalSlugAndTag_Tag_nameOrderByCreatedAtAsc(
-                        slug, tagName, pageable);
-            }
-        }
         Slice<PostResponse> mapped = posts.map(PostResponse::from);
         return PostResponse.SliceResult.from(mapped);
     }
 
-    // 검색
-    @Transactional(readOnly = true)
-    public PostResponse.SliceResult searchPostsBySlug(String slug, String keyword, String tagName, Pageable pageable) {
-        Slice<Post> posts;
-
-        if (tagName != null) {
-            // 특정 게시판(태그) 내에서 검색
-            posts = postRepository.searchBySlugAndTagAndKeyword(slug, tagName, keyword, pageable);
-        } else {
-            // 전체 게시글 중에서 검색
-            posts = postRepository.searchBySlugAndKeyword(slug, keyword, pageable);
-        }
-
-        // Post → PostResponse 매핑
-        Slice<PostResponse> mapped = posts.map(PostResponse::from);
-
-        // 동일한 방식으로 SliceResult 변환
-        return PostResponse.SliceResult.from(mapped);
-    }
 
 }

@@ -1,3 +1,44 @@
+#application.yml 파일
+
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 24h   # 세션 유지 시간
+
 spring:
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local} # 로컬에서 테스트할 때는 local yml 사용
+  datasource:
+    url: jdbc:mysql://localhost:3306/plink
+    username: root
+    password: plink2025
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update     # 운영 단계에서는 validate로 바꾸는 것 추천!
+    show-sql: true         # 콘솔에서 SQL 로그 확인
+    properties:
+      hibernate:
+        format_sql: true   # SQL 로그 포맷팅
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  # 세션 관리 (추후 Redis로 확장할 때 대비)
+  session:
+    store-type: none       # 기본값: 서버 메모리(HttpSession)
+    timeout: 24h
+
+
+cloud:
+  aws:
+    s3:
+      bucket: plink-backend-bucket
+      base-url: https://plink-backend-bucket.s3.ap-northeast-2.amazonaws.com/
+    region:
+      static: ap-northeast-2
+
+# CORS 설정
+# Spring Boot 3.x 이상에서는 config 클래스에서 WebMvcConfigurer로 직접 지정해도 OK
+cors:
+  allowed-origins: "http://localhost:5173"   # React dev 서버 주소
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-headers: "*"
+  allow-credentials: true

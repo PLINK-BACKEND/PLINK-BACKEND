@@ -18,13 +18,13 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{slug}/post")
+@RequestMapping("/{slug}/posst")
 public class CommentController {
 
     private final CommentService commentService;
 
     // 댓글 작성
-    @PostMapping("/{postId}/comment")
+    @PostMapping("/{postId}/comments")
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable String slug,
             @PathVariable Long postId,
@@ -40,7 +40,7 @@ public class CommentController {
     }
 
     // 댓글 수정
-    @PatchMapping("/comment/{commentId}")
+    @PatchMapping("/comments/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable String slug,
             @PathVariable Long commentId,
@@ -61,7 +61,7 @@ public class CommentController {
     }
 
     // 게시글별 댓글 조회
-    @GetMapping("/{postId}/comment")
+    @GetMapping("/{postId}/comments")
     public ResponseEntity<List<CommentResponse>> getComments(
             @PathVariable String slug,
             @PathVariable Long postId) {
@@ -70,7 +70,7 @@ public class CommentController {
 
 
     // 댓글 삭제
-    @DeleteMapping("/comment/{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable String slug,
             @PathVariable Long commentId)
