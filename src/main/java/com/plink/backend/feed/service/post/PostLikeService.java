@@ -49,6 +49,7 @@ public class PostLikeService {
         }
 
         long likeCount = postLikeRepository.countByPost(post);
+        postRepository.save(post);
         return new LikeResponse(liked, likeCount);
 
     }

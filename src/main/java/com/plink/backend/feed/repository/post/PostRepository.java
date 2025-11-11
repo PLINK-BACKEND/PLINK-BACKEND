@@ -68,7 +68,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     WHERE p.festival.slug = :slug
       AND (:postType IS NULL OR p.postType = :postType)
       AND (COALESCE(:hiddenIds, NULL) IS NULL OR p.id NOT IN :hiddenIds)
-    ORDER BY (p.likeCount + p.commentCount) ASC , p.createdAt ASC 
+    ORDER BY (p.likeCount + p.commentCount) DESC , p.createdAt DESC 
 """)
     List<Post> findPopularPosts(
             @Param("slug") String slug,
