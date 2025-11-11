@@ -1,6 +1,7 @@
 package com.plink.backend.feed.repository;
 
 import com.plink.backend.feed.entity.Post;
+import com.plink.backend.feed.entity.PostType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -30,7 +31,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
       )
       AND (COALESCE(:hiddenIds, NULL) IS NULL OR p.id NOT IN :hiddenIds)
-    ORDER BY p.createdAt DESC
+    ORDER BY p.createdAt ASC 
 """)
     Slice<Post> findPostsFiltered(
             @Param("slug") String slug,
@@ -66,10 +67,19 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
 
     // 인기글
-    @Query("SELECT p FROM Post p WHERE p.festival.slug = :slug " +
-            "ORDER BY (p.likeCount + p.commentCount) DESC, p.createdAt DESC")
-    List<Post> findPopularPostsBySlug(@Param("slug") String slug, Pageable pageable);
-
+    @Query("""
+    SELECT p FROM Post p
+    WHERE p.festival.slug = :slug
+      AND (:postType IS NULL OR p.postType = :postType)
+      AND (COALESCE(:hiddenIds, NULL) IS NULL OR p.id NOT IN :hiddenIds)
+    ORDER BY (p.likeCount + p.commentCount) ASC , p.createdAt ASC 
+""")
+    List<Post> findPopularPosts(
+            @Param("slug") String slug,
+            @Param("postType") PostType postType,
+            @Param("hiddenIds") List<Long> hiddenIds,
+            Pageable pageable
+    );
 
 
 
