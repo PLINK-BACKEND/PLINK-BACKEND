@@ -24,17 +24,24 @@ import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -50,6 +57,10 @@ public class PostService {
     private final ImageService imageService;
     private final UserService userService;
 
+    @Autowired
+    private SimpMessageSendingOperations messagingTemplate;
+
+
     @Transactional
     // 게시글 작성하기
 
@@ -57,11 +68,11 @@ public class PostService {
 
         // 행사 검증
         Festival festival = festivalRepository.findBySlug(slug)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 축제입니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,"존재하지 않는 행사입니다."));
 
         // 태그 검증
         Tag tag = tagRepository.findById(request.getTagId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,"존재하지 않는 태그입니다."));
 
         // 작성자-축제 매핑 검증
         UserFestival userFestival = userFestivalRepository
@@ -74,7 +85,7 @@ public class PostService {
         // 기본 내용 검증
         if (request.getPostType() == PostType.NORMAL &&
                 (request.getContent() == null || request.getContent().isBlank())) {
-            throw new IllegalArgumentException("게시글의 내용은 비워둘 수 없습니다.");
+            throw new CustomException(HttpStatus.NOT_FOUND, "내용을 비워둘 수 없습니다.");
         }
 
         // Post 생성 및 1차 저장
@@ -97,13 +108,39 @@ public class PostService {
             postRepository.save(post);
         }
 
+        // 이미지 추가
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             imageService.saveImages(post.getId(), request.getImages());
         }
 
         // 최종 저장
-        return postRepository.save(post);
+        Post finalPost = postRepository.save(post);
+
+        String festivalSlug = festival.getSlug();
+        Long tagId = tag.getId();
+
+        // 웹소켓 메세지 전송
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+
+                    String slugPath = "/topic/" + festivalSlug + "/posts";
+                    String tagPath = slugPath + "/" + tagId;
+
+                    // 행사 전체 피드에 전송
+                    log.info("📡 Broadcasting to All {}", slugPath);
+                    messagingTemplate.convertAndSend(slugPath, PostResponse.from(finalPost));
+
+                    // 행사 내 특정 태그 피드에도 전송
+                    log.info("📡 Broadcasting to Tag {}", tagPath);
+                    messagingTemplate.convertAndSend(tagPath, PostResponse.from(finalPost));
+            }
+        });
+
+        return finalPost;
+
     }
+
 
     // 게시글 수정
     @Transactional

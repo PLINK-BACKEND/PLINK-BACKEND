@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{slug}/post")
+@RequestMapping("/{slug}/posts")
 public class CommentController {
 
     private final CommentService commentService;
@@ -34,8 +34,8 @@ public class CommentController {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
 
-        Comment comment = commentService.createComment(user, request,postId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(CommentResponse.from(comment));
+        CommentResponse response = commentService.createComment(user, request, slug, postId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // 댓글 수정
