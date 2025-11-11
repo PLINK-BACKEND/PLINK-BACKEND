@@ -37,7 +37,9 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -197,7 +199,33 @@ public class PostService {
             }
 
         }
+        String slug = post.getFestival().getSlug();
+        Long tagId = post.getTag() != null ? post.getTag().getId() : null;
+        Long deletedPostId = post.getId();
+
         postRepository.delete(post);
+
+        // 웹소켓 메세지 전송
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("id", deletedPostId);
+                payload.put("deleted", true);
+
+                // 전체 피드 전송
+                String allPath = String.format("/topic/%s/posts", slug);
+                messagingTemplate.convertAndSend(allPath, payload);
+                log.info("게시글 삭제 전송 (전체): {}", allPath);
+
+                // 특정 태그 피드 전송
+                if (tagId != null) {
+                    String tagPath = String.format("/topic/%s/posts/%d", slug, tagId);
+                    messagingTemplate.convertAndSend(tagPath, payload);
+                    log.info("게시글 삭제 전송 (태그): {}", tagPath);
+                }
+            }
+        });
     }
 
 
