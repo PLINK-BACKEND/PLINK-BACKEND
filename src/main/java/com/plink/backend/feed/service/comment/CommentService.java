@@ -20,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -95,8 +97,30 @@ public class CommentService {
             throw new SecurityException("본인만 댓글을 삭제할 수 있습니다.");
         }
 
+        Post post = comment.getPost();
+        Long postId = post.getId();
+        String slug = post.getFestival().getSlug();
+        Long deletedCommentId = comment.getId();
+
         commentRepository.delete(comment);
         comment.getPost().decreaseCommentCount();
+
+        // DB 커밋 완료 후 메시지 전송 (게시글 방식 동일)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "DELETE");        // 이벤트 타입
+                payload.put("id", deletedCommentId);  // 삭제된 댓글 ID
+                payload.put("deleted", true);         // 삭제 여부 플래그
+
+                String topicPath = String.format("/topic/%s/posts/%d/comments", slug, postId);
+
+                log.info(" 댓글 삭제 전송: {}", topicPath);
+                messagingTemplate.convertAndSend(topicPath, payload);
+            }
+        });
+
     }
 
     // 댓글 조회
