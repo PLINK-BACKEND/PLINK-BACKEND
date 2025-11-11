@@ -29,10 +29,6 @@ public class PollOption {
         this.voteCount++;
     }
 
-    public void decreaseVoteCount() {
-        if (this.voteCount > 0) this.voteCount--;
-    }
-
     void setPoll(Poll poll) { this.poll = poll; }
 
 }

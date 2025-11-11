@@ -3,7 +3,9 @@ package com.plink.backend.feed.entity.poll;
 import com.plink.backend.feed.entity.post.Post;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +33,7 @@ public class Poll {
         option.setPoll(this);
     }
 
-    public void setPost(Post post) { this.post = post; }
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
 }

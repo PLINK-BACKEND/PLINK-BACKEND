@@ -68,6 +68,9 @@ public class PostService {
                 .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
 
+        // 게스트 검증 ( 게스트인 경우에는 글 작성 불가)
+
+
         // 기본 내용 검증
         if (request.getPostType() == PostType.NORMAL &&
                 (request.getContent() == null || request.getContent().isBlank())) {

@@ -112,12 +112,6 @@ public class Post {
         }
     }
 
-    // 이미지 추가
-    public void addImage(Image image) {
-        images.add(image);
-        image.setPost(this);
-    }
-
     // 댓글 수 증가
     public void increaseCommentCount() {
             this.commentCount = this.commentCount + 1;

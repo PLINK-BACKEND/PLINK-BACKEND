@@ -30,7 +30,7 @@ public class CommentLikeController {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
 
-        LikeResponse response = CommentLikeService.Like(user,commentId);
+        LikeResponse response = CommentLikeService.Like(user,commentId,slug);
         return ResponseEntity.ok(response);
     }
 }
