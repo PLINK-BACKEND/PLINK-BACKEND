@@ -1,8 +1,8 @@
 package com.plink.backend.main.service;
 
 import com.plink.backend.feed.dto.post.PostResponse;
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.repository.PostRepository;
+import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.repository.post.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

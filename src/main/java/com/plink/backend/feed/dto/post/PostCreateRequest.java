@@ -1,7 +1,7 @@
 package com.plink.backend.feed.dto.post;
 
 import com.plink.backend.feed.dto.poll.PollCreateRequest;
-import com.plink.backend.feed.entity.PostType;
+import com.plink.backend.feed.entity.post.PostType;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
