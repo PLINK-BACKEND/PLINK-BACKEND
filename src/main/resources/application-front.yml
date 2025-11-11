@@ -1,0 +1,20 @@
+# 프론트 테스트용 설정 - H2 설정으로 mysql 없이도 테스트 가능하도록 함
+spring:
+  datasource:
+    url: jdbc:h2:mem:plink;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
