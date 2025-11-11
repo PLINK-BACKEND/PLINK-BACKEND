@@ -3,10 +3,7 @@ package com.plink.backend.feed.dto.post;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.dto.poll.PollResponse;
-import com.plink.backend.feed.entity.Image;
-import com.plink.backend.feed.entity.Poll;
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.user.entity.User;
+import com.plink.backend.feed.entity.post.Post;
 import io.micrometer.common.lang.Nullable;
 import lombok.*;
 

@@ -1,7 +1,7 @@
 package com.plink.backend.main.dto;
 
 import com.plink.backend.feed.dto.post.PostResponse;
-import com.plink.backend.feed.entity.Post;
+import com.plink.backend.feed.entity.post.Post;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

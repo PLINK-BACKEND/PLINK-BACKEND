@@ -1,7 +1,7 @@
 package com.plink.backend.feed.dto.comment;
 
 
-import com.plink.backend.feed.entity.Comment;
+import com.plink.backend.feed.entity.comment.Comment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

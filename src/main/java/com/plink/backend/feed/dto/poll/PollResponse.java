@@ -1,12 +1,11 @@
 package com.plink.backend.feed.dto.poll;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.plink.backend.feed.entity.Poll;
-import com.plink.backend.feed.entity.PollOption;
+import com.plink.backend.feed.entity.poll.Poll;
+import com.plink.backend.feed.entity.poll.PollOption;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
