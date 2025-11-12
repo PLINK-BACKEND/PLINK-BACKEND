@@ -26,6 +26,14 @@ public class UserFestivalService {
         String slug = request.getSlug();
         String nickname = request.getNickname();
 
+        if (slug == null || slug.isBlank()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "slug 값이 누락되었습니다.");
+        }
+
+        if (nickname == null || nickname.isBlank()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "닉네임 값이 누락되었습니다.");
+        }
+
         // 닉네임 중복 검사 (같은 slug 내에서)
         if (userFestivalRepository.existsByFestivalSlugAndNickname(slug, nickname)) {
             throw new CustomException(HttpStatus.CONFLICT, "이 닉네임은 이미 사용 중입니다.");

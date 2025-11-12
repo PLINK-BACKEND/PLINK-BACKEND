@@ -7,9 +7,9 @@ import lombok.Getter;
 @Getter
 public class UserResponse {
     private final String email;
-    private final String nickname;
     private final String profileImageUrl;
     private final String role;
+    private final String nickname;
     private String slug;
 
     public UserResponse(User user, UserFestival festival) {
