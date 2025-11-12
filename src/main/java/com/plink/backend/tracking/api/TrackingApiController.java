@@ -21,10 +21,8 @@ public class TrackingApiController {
 
     // 특정 축제의 접속자 수
     @GetMapping("/{slug}/active-users")
-    public Map<String, Object> getFestivalCount(@PathVariable String slug) {
-        return Map.of(
-                "slug", slug,
-                "activeUsers", trackingService.getActiveCount(slug)
-        );
+    public Map<String, Integer> getFestivalCount(@PathVariable String slug) {
+        int count = trackingService.getActiveCount(slug);
+        return Map.of(slug, count);
     }
 }
