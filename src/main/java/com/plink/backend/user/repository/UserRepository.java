@@ -12,6 +12,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // slug + nickname 조합으로 유저 조회 (게스트→회원 전환 시 사용)
     Optional<User> findByNicknameAndSlug(String nickname, String slug);
 
-    // slug + nickname 중복 여부 확인 (게스트/회원 통합 중복검사)
-    boolean existsBySlugAndNickname(String slug, String nickname);
 }
