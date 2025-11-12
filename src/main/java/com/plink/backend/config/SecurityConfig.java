@@ -70,7 +70,8 @@ public class SecurityConfig {
                                 "/error",           // 오류 페이지 등등
                                 "/*/games/**",
                                 "/error",          // 오류 페이지 등등
-                                "/fourcuts/**"
+                                "/fourcuts/**",
+                                "/api/festival/**"
 
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**","/{slug}/main","/{slug}/main/**").permitAll()
