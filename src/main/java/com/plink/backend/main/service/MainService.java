@@ -1,32 +1,26 @@
 package com.plink.backend.main.service;
 
-import com.plink.backend.feed.dto.post.PostResponse;
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.entity.PostType;
-import com.plink.backend.feed.entity.ReportTargetType;
-import com.plink.backend.feed.repository.HiddenContentRepository;
-import com.plink.backend.feed.repository.PostRepository;
+import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.entity.post.PostType;
+import com.plink.backend.feed.entity.report.ReportTargetType;
+import com.plink.backend.feed.repository.report.HiddenContentRepository;
+import com.plink.backend.feed.repository.post.PostRepository;
 import com.plink.backend.main.dto.MainResponse;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
-import com.plink.backend.user.repository.UserRepository;
-import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MainService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
     private final UserFestivalRepository userFestivalRepository;
     private final HiddenContentRepository hiddenContentRepository;
 
@@ -34,11 +28,9 @@ public class MainService {
     @Transactional(readOnly = true)
     public MainResponse getPopularPosts(User user, String slug) {
 
-
         List<Long> hiddenPostIds = List.of(); // 기본값
 
         // 로그인한 경우만 숨김(신고) 게시글 목록 조회
-
         if (user != null) {
             Optional<UserFestival> optionalFestival =
                     userFestivalRepository.findByUser_UserIdAndFestivalSlug(user.getUserId(), slug);
@@ -58,18 +50,15 @@ public class MainService {
 
         Post popularPoll = popularPolls.isEmpty() ? null : popularPolls.get(0);
 
-        // 인기 게시글 3개 (POLL 포함 가능하나 위에서 뽑은 앙케이트 제외)
-        List<Long> excludeIds = new ArrayList<>(hiddenPostIds);
-        if (popularPoll != null) excludeIds.add(popularPoll.getId());
-
+        // 인기 게시글 3개
         List<Post> popularPosts = postRepository.findPopularPosts(
-                slug, null,
-                excludeIds.isEmpty() ? null : excludeIds,
+                slug, PostType.NORMAL,
+                hiddenPostIds.isEmpty() ? null : hiddenPostIds,
                 PageRequest.of(0, 3)
         );
 
         // DTO 변환 후 응답
         return MainResponse.from(popularPoll, popularPosts);
-
     }
 }
+

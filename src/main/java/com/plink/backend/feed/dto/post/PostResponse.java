@@ -3,9 +3,7 @@ package com.plink.backend.feed.dto.post;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.plink.backend.feed.dto.poll.PollResponse;
-import com.plink.backend.feed.entity.Image;
-import com.plink.backend.feed.entity.Post;
-import lombok.AccessLevel;
+import com.plink.backend.feed.entity.post.Post;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

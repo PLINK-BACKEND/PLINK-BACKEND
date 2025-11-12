@@ -1,11 +1,10 @@
 package com.plink.backend.auth.service;
 
-import com.plink.backend.commonService.S3UploadResult;
-import com.plink.backend.auth.dto.GuestRequest;
+import com.plink.backend.commonS3.S3UploadResult;
 import com.plink.backend.auth.dto.LoginRequest;
 import com.plink.backend.auth.dto.SignUpRequest;
 import com.plink.backend.auth.dto.UserResponse;
-import com.plink.backend.commonService.S3Service;
+import com.plink.backend.commonS3.S3Service;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
