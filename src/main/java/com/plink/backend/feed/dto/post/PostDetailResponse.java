@@ -33,7 +33,6 @@ public class PostDetailResponse {
     private int commentCount;
     private int likeCount;
 
-
     @Nullable
     private PollResponse poll;
 
@@ -82,7 +81,9 @@ public class PostDetailResponse {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .author(post.getAuthor().getNickname())
+                .profileImageUrl(post.getAuthor().getUser().getProfileImageUrl())
                 .tagName(post.getTag().getTag_name())
+                .postType(post.getPostType().toString())
                 .poll(pollResponse)
                 .createdAt(post.getCreatedAt())
                 .images(post.getImages() == null ? List.of() :
