@@ -1,13 +1,10 @@
-package com.plink.backend.tracking.service;
+package com.plink.backend.festival.tracking.service;
 
-import com.plink.backend.main.entity.Festival;
-import com.plink.backend.main.repository.FestivalRepository;
+import com.plink.backend.festival.entity.Festival;
+import com.plink.backend.festival.repository.FestivalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.messaging.SessionConnectEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import org.springframework.context.event.EventListener;
 
 import java.util.List;
 import java.util.Map;
