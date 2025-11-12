@@ -39,6 +39,6 @@ cloud:
 # Spring Boot 3.x 이상에서는 config 클래스에서 WebMvcConfigurer로 직접 지정해도 OK
 cors:
   allowed-origins: "http://localhost:5173"   # React dev 서버 주소
-  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
   allowed-headers: "*"
   allow-credentials: true
