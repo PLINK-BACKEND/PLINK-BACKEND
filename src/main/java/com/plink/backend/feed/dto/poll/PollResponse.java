@@ -16,6 +16,7 @@ public class PollResponse {
     private Long pollId;
     private Long selectedOptionId;
     private List<PollOptionResponse> result;
+    private int totalVotes;
 
     public static PollResponse from(Poll poll, Long selectedOptionId) {
 
@@ -38,6 +39,7 @@ public class PollResponse {
                                 )
                                 .toList()
                 )
+                .totalVotes(totalVotes)
                 .build();
     }
 }

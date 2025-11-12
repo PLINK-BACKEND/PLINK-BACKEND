@@ -1,5 +1,6 @@
 package com.plink.backend.feed.service.post;
 
+import com.plink.backend.feed.dto.poll.PollResponse;
 import com.plink.backend.feed.dto.post.PostCreateRequest;
 import com.plink.backend.feed.dto.post.PostResponse;
 import com.plink.backend.feed.dto.post.PostDetailResponse;
@@ -80,7 +81,6 @@ public class PostService {
                 .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
 
-        // 게스트 검증 ( 게스트인 경우에는 글 작성 불가)
 
 
         // 기본 내용 검증
@@ -171,7 +171,6 @@ public class PostService {
             post.updateTag(tag);
         }
 
-
         return post;
     }
 
@@ -232,30 +231,33 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostDetailResponse getPostDetail(User user, String slug, Long postId) {
 
-        // 비회원인 경우
-        if (user == null){
-            Post post = postRepository.findWithAllById(postId)
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-            return PostDetailResponse.from(post);
-
-        }
-
-        // 로그인한 사용자가 있을 경우, 숨긴 목록 조회
-        UserFestival userFestival = userFestivalRepository
-                .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 사용자를 찾을 수 없습니다."));
-
-        List<Long> hiddenPostIds = hiddenContentRepository
-                .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.POST);
-        List<Long> hiddenCommentIds = hiddenContentRepository
-                .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
-
-        if (hiddenPostIds.contains(postId)) {
-            throw new CustomException(HttpStatus.FORBIDDEN, "신고하여 숨긴 게시글은 볼 수 없습니다.");
-        }
-
+        // 게시글 조회
         Post post = postRepository.findWithAllById(postId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+
+        List<Long> hiddenCommentIds = List.of();
+
+        // 로그인을 한 사용자
+        if (user != null) {
+            UserFestival userFestival = userFestivalRepository
+                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 사용자를 찾을 수 없습니다."));
+
+            List<Long> hiddenPostIds = hiddenContentRepository
+                    .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.POST);
+            hiddenCommentIds = hiddenContentRepository
+                    .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
+
+            if (hiddenPostIds.contains(postId)) {
+                throw new CustomException(HttpStatus.FORBIDDEN, "신고하여 숨긴 게시글은 볼 수 없습니다.");
+            }
+        }
+
+        // 앙케이트인 경우
+        if (post.getPostType() == PostType.POLL && post.getPoll() != null) {
+            PollResponse pollResponse = pollService.getPollResponse(post.getPoll(), user);
+            return PostDetailResponse.from(post, pollResponse, hiddenCommentIds);
+        }
 
         return PostDetailResponse.from(post,hiddenCommentIds);
     }

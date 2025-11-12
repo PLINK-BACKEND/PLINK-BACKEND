@@ -58,9 +58,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "tag",
             "images",
             "comments",
-            "comments.author"
+            "comments.author",
+            "poll",
+            "poll.options"
     })
-    Optional<Post> findWithAllById(Long id);
+    @Query("SELECT p FROM Post p WHERE p.id = :id")
+    Optional<Post> findWithAllById(@Param("id") Long id);
 
     // 인기글
     @Query("""
