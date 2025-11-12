@@ -7,7 +7,7 @@ import com.plink.backend.user.entity.UserFestival;
 import jakarta.persistence.*;
 import lombok.*;
 
-import com.plink.backend.main.entity.Festival;
+import com.plink.backend.festival.entity.Festival;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 

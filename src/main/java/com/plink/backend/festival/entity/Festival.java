@@ -1,4 +1,4 @@
-package com.plink.backend.main.entity;
+package com.plink.backend.festival.entity;
 
 
 import jakarta.persistence.*;
@@ -25,12 +25,8 @@ public class Festival {
 
     private LocalDate startDate;
     private LocalDate endDate;
-    private Boolean is_active;
 
-    @CreationTimestamp
-    private  LocalDateTime createdAt;
-    @CreationTimestamp
-    private  LocalDateTime updatedAt;
+    private String location;
 
     // slug 자동 생성
     public void generateSlug(){
@@ -39,7 +35,5 @@ public class Festival {
                 .replaceAll("[^a-z0-9가-힣 ]", "")
                 .replace(" ", "-");
     }
-
-
 
 }

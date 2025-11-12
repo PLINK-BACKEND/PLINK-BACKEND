@@ -1,6 +1,6 @@
-package com.plink.backend.tracking.webSocket;
+package com.plink.backend.festival.tracking.webSocket;
 
-import com.plink.backend.tracking.service.TrackingService;
+import com.plink.backend.festival.tracking.service.TrackingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

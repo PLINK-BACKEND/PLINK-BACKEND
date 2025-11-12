@@ -1,5 +1,5 @@
-package com.plink.backend.tracking.api;
-import com.plink.backend.tracking.service.TrackingService;
+package com.plink.backend.festival.tracking.api;
+import com.plink.backend.festival.tracking.service.TrackingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
