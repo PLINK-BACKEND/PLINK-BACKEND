@@ -72,7 +72,8 @@ public class SecurityConfig {
                                 "/error",          // 오류 페이지 등등
                                 "/fourcuts/**",
                                 "/api/festival/**",
-                                "/favicon.ico"
+                                "/favicon.ico",
+                                "/plink/festivals"
 
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**","/{slug}/main","/{slug}/main/**").permitAll()
