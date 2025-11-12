@@ -13,8 +13,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/feed")
-                .setAllowedOriginPatterns("*") // 추후 보안면에서 수정 (프론트 도메인만 허용하도록)
-                .withSockJS();
+                .setAllowedOriginPatterns("*")// 추후 보안면에서 수정 (프론트 도메인만 허용하도록)
+        .withSockJS();
 
     }
 

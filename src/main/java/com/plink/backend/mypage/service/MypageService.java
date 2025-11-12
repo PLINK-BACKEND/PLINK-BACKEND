@@ -1,19 +1,16 @@
 package com.plink.backend.mypage.service;
 
 import com.plink.backend.auth.dto.UserResponse;
-import com.plink.backend.commonService.S3Service;
-import com.plink.backend.commonService.S3UploadResult;
+import com.plink.backend.commonS3.S3Service;
+import com.plink.backend.commonS3.S3UploadResult;
 import com.plink.backend.feed.dto.comment.CommentResponse;
-import com.plink.backend.feed.dto.poll.PollResponse;
-import com.plink.backend.feed.dto.post.PostDetailResponse;
 import com.plink.backend.feed.dto.post.PostResponse;
-import com.plink.backend.feed.entity.Comment;
-import com.plink.backend.feed.entity.Post;
-import com.plink.backend.feed.entity.PostLike;
-import com.plink.backend.feed.entity.PostType;
-import com.plink.backend.feed.repository.CommentRepository;
-import com.plink.backend.feed.repository.PostLikeRepository;
-import com.plink.backend.feed.repository.PostRepository;
+import com.plink.backend.feed.entity.comment.Comment;
+import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.entity.post.PostLike;
+import com.plink.backend.feed.repository.comment.CommentRepository;
+import com.plink.backend.feed.repository.post.PostLikeRepository;
+import com.plink.backend.feed.repository.post.PostRepository;
 import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;

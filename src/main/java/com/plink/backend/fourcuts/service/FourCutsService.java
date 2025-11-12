@@ -1,7 +1,7 @@
 package com.plink.backend.fourcuts.service;
 
-import com.plink.backend.commonService.S3Service;
-import com.plink.backend.commonService.S3UploadResult;
+import com.plink.backend.commonS3.S3Service;
+import com.plink.backend.commonS3.S3UploadResult;
 import com.plink.backend.fourcuts.dto.FourCutsResponse;
 import com.plink.backend.fourcuts.util.QRCodeUtil;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
