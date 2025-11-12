@@ -16,7 +16,13 @@ public class UserResponse {
         this.email = user.getEmail();
         this.profileImageUrl = user.getProfileImageUrl();
         this.role = user.getRole().name();
-        this.nickname = festival.getNickname();
-        this.slug = festival.getFestivalSlug();
+
+        if (festival != null) {
+            this.nickname = festival.getNickname();
+            this.slug = festival.getFestivalSlug();
+        } else {
+            this.nickname = null;
+            this.slug = null;
+        }
     }
 }
