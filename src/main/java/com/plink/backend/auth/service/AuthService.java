@@ -198,6 +198,17 @@ public class AuthService {
 
         userRepository.save(guest);
 
+        // SecurityContext에 게스트 인증 등록!
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(guest, null, guest.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        session.setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                SecurityContextHolder.getContext()
+        );
+
         // 세션 등록 (게스트 상태로 식별)
         session.setAttribute("guest", guest);
         // UserFestival은 아직 없으므로 null

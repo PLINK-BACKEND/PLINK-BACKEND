@@ -47,11 +47,17 @@ public class AuthController {
     // 게스트 세션 생성
     @PostMapping(value = "/guest", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserResponse> guestLogin(
-            @RequestPart("slug") String slug,
-            @RequestPart("nickname") String nickname,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
+            @RequestParam("nickname") String nickname,
+            @RequestParam("slug") String slug,
+            @RequestPart(value = "profileImage") MultipartFile profileImage
     ) throws IOException {
-        UserResponse guest = authService.createGuest(slug, nickname, profileImage);
+
+        UserResponse guest = authService.createGuest(
+                slug,
+                nickname,
+                profileImage
+        );
+
         return ResponseEntity.ok(guest);
     }
 
