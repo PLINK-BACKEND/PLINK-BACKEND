@@ -5,6 +5,8 @@ import com.plink.backend.feed.entity.post.PostLike;
 import com.plink.backend.user.entity.UserFestival;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -23,5 +25,20 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long>{
             "post.poll"
     })
     List<PostLike> findByUser_User_UserIdOrderByPost_CreatedAtDesc(Long userId);
+
+    // 검색
+    @Query("""
+    SELECT p FROM PostLike pl
+    JOIN pl.post p
+    WHERE pl.user.user.userId = :userId
+      AND (:keyword IS NULL 
+           OR p.title LIKE %:keyword%
+           OR p.content LIKE %:keyword%)
+    ORDER BY p.createdAt DESC
+    """)
+    List<Post> searchMyLikedPosts(
+            @Param("userId") Long userId,
+            @Param("keyword") String keyword
+    );
 }
 

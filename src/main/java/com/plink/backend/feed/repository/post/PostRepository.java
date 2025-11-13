@@ -52,6 +52,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     })
     List<Post> findByAuthor_User_UserId(Long userId);
 
+    // 내가 쓴 글 검색
+    @Query("""
+    SELECT p FROM Post p
+    WHERE p.author.user.userId = :userId
+      AND (:keyword IS NULL 
+           OR p.title LIKE %:keyword%
+           OR p.content LIKE %:keyword%)
+    ORDER BY p.createdAt DESC
+    """)
+    List<Post> searchMyPosts(
+            @Param("userId") Long userId,
+            @Param("keyword") String keyword
+    );
+
     // 상세 조회
     @EntityGraph(attributePaths = {
             "author",

@@ -49,6 +49,34 @@ public class MypageController {
         return ResponseEntity.ok(response);
     }
 
+    // 검색
+    @GetMapping("/search")
+    public ResponseEntity<?> searchMyPage(
+            @AuthenticationPrincipal User user,
+            @RequestParam String type,
+            @RequestParam(required = false) String keyword
+    ) {
+        Long userId = user.getUserId();
+
+        return switch (type) {
+
+            case "story" -> ResponseEntity.ok(
+                    mypageService.searchMyPosts(userId, keyword)
+            );
+
+            case "liked" -> ResponseEntity.ok(
+                    mypageService.searchMyLikedPosts(userId, keyword)
+            );
+
+            case "commented" -> ResponseEntity.ok(
+                    mypageService.searchMyCommentedPosts(userId, keyword)
+            );
+
+            default -> ResponseEntity.badRequest()
+                    .body("Invalid type. Allowed: story, liked, commented");
+        };
+    }
+
     // 닉네임 변경하기
     @PatchMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(
