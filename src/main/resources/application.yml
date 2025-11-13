@@ -14,9 +14,6 @@ spring:
   session:
     store-type: none       # 기본값: 서버 메모리(HttpSession)
     timeout: 24h
-    cookie:
-      same-site: lax
-      secure: false
 
 
 cloud:
