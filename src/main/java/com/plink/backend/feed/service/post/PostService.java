@@ -109,7 +109,7 @@ public class PostService {
 
         // 이미지 추가
         if (request.getImages() != null && !request.getImages().isEmpty()) {
-            imageService.saveImages(post.getId(), request.getImages());
+            imageService.saveImages(author,post.getId(), request.getImages());
         }
 
         // 최종 저장
