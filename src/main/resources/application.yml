@@ -24,6 +24,15 @@ cloud:
     region:
       static: ap-northeast-2
 
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: None
+
+
+
 # CORS 설정
 # Spring Boot 3.x 이상에서는 config 클래스에서 WebMvcConfigurer로 직접 지정해도 OK
 cors:

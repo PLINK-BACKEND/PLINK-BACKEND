@@ -44,6 +44,7 @@ public class SecurityConfig {
 
             // 쿠키/세션 허용
             config.setAllowCredentials(true);
+            config.setExposedHeaders(List.of("*"));
 
             return config;
         };
