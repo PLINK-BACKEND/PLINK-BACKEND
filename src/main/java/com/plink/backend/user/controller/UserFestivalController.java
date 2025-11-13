@@ -5,7 +5,6 @@ import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.user.dto.JoinFestivalRequest;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.service.UserFestivalService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,13 +25,12 @@ public class UserFestivalController {
 
     @PostMapping("/join")
     public ResponseEntity<UserResponse> joinFestival(
-            HttpSession session,
+            @AuthenticationPrincipal User user,
             @RequestBody JoinFestivalRequest request
     ) {
-        User user = (User) session.getAttribute("user");
+        // 로그인 세션 확인
         if (user == null) {
-            throw new CustomException(HttpStatus.UNAUTHORIZED,
-                    "로그인 세션이 만료되었거나 인증되지 않았습니다.");
+            throw new CustomException(HttpStatus.UNAUTHORIZED, "로그인 세션이 만료되었거나 인증되지 않았습니다.");
         }
 
         log.info("[JOIN] 요청 사용자: {}", user.getEmail());
