@@ -21,4 +21,6 @@ public interface UserFestivalRepository extends JpaRepository<UserFestival, Long
     // slug + nickname 조합으로 유저 조회 (게스트→회원 전환 시 사용)
     Optional<User> findByNicknameAndFestivalSlug(String nickname, String slug);
 
+    boolean existsByNicknameAndFestivalSlug(String nickname, String festivalSlug);
+
 }
