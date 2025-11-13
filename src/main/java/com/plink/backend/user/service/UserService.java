@@ -61,9 +61,4 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
     }
-
-    // 닉네임 중복 판별
-    public boolean isNicknameDuplicate(String nickname) {
-        return userFestivalRepository.existsByNickname(nickname);
-    }
 }
