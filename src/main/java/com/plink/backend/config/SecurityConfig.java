@@ -47,9 +47,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
                     configuration.setAllowedOriginPatterns(List.of(
-                            "*"
-                            //"http://localhost:5173",        // 로컬용
-                            // "https://plink-2025.netlify.app" // 배포용
+                            "http://localhost:5173",        // 로컬용
+                            "https://plink-2025.netlify.app" // 배포용
                     ));
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                     configuration.setAllowedHeaders(List.of("*"));
