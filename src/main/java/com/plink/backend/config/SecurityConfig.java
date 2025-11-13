@@ -32,8 +32,9 @@ public class SecurityConfig {
 
             // ✔ 프론트엔드 도메인 (HTTPS)
             config.setAllowedOrigins(List.of(
-                    "http://localhost:5173",              // 로컬 개발
-                    "https://plink-2025.netlify.app"      // 배포된 프론트
+                "*"
+                   // "http://localhost:5173",              // 로컬 개발
+                   // "https://plink-2025.netlify.app"      // 배포된 프론트
             ));
 
             config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
