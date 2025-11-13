@@ -30,21 +30,20 @@ public class SecurityConfig {
         return request -> {
             CorsConfiguration config = new CorsConfiguration();
 
-            // ✔ 프론트엔드 도메인 (HTTPS)
-            config.setAllowedOrigins(List.of(
-                "*"
-                   // "http://localhost:5173",              // 로컬 개발
-                   // "https://plink-2025.netlify.app"      // 배포된 프론트
+            // 와일드카드 허용
+            config.setAllowedOriginPatterns(List.of(
+                    "*"
+                    // "http://localhost:5173",
+                    // "https://plink-2025.netlify.app",
+                    // "http://plink-2025.site",
+                    // "https://plink-2025.site"
             ));
 
             config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
             config.setAllowedHeaders(List.of("*"));
 
-            // ✔ JSESSIONID 쿠키 허용
+            // 쿠키/세션 허용
             config.setAllowCredentials(true);
-
-            // ✔ Set-Cookie 헤더 프론트에서 읽을 수 있게 허용
-            config.setExposedHeaders(List.of("Set-Cookie"));
 
             return config;
         };
