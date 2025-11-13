@@ -69,10 +69,10 @@ public class SecurityConfig {
                                 "/error",           // 오류 페이지 등등
                                 "/*/games/**",
                                 "/error",          // 오류 페이지 등등
-                                "/fourcuts/**",
-                                "/user/festival/join" // join 로직이지만 컨트롤러에서 세션 체크하도록 함
+                                "/fourcuts/**"
 
                         ).permitAll()
+                        .requestMatchers("/user/festival/join").authenticated()
                         .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**","/{slug}/main","/{slug}/main/**").permitAll()
                         .anyRequest().authenticated()
                 )
