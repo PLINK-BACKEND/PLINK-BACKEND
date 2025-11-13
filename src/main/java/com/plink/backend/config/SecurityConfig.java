@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**",        // 로그인, 회원가입, 게스트
-                                "/user/info",     // 로그인한 유저 조회용
+                                "/user/**",     // 로그인한 유저 조회용
                                 "/ws/**",         // 웹소켓 엔드포인트
                                 "/error",           // 오류 페이지 등등
                                 "/*/games/**",
