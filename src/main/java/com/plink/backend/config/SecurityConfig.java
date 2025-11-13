@@ -77,6 +77,14 @@ public class SecurityConfig {
 
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**","/{slug}/main","/{slug}/main/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/*/mypage/profile").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/*/posts").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/*/posts/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/*/posts/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/*/reports/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/*/comments/*").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/*/comments/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/*/comments/*").authenticated()
                         .anyRequest().authenticated()
                 )
 
