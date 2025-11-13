@@ -63,7 +63,7 @@ public class UserService {
     }
 
     // 닉네임 중복 판별
-    public boolean isNicknameDuplicate(String nickname) {
-        return userFestivalRepository.existsByNickname(nickname);
+    public boolean isNicknameDuplicate(String slug, String nickname) {
+        return userFestivalRepository.existsByNicknameAndFestivalSlug(nickname, slug);
     }
 }

@@ -55,7 +55,7 @@ public class UserController {
             @RequestParam String slug,
             @RequestParam String nickname
     ) {
-        boolean exists = userFestivalRepository.existsByNickname(nickname);
+        boolean exists = userFestivalRepository.existsByNicknameAndFestivalSlug(nickname, slug);
 
         if (exists) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("중복된 닉네임입니다.");
