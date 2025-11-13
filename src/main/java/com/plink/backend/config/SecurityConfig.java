@@ -28,8 +28,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true); // 쿠키/세션 허용
         config.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173",        // 로컬 개발용
-                "https://plink-2025.netlify.app" // 배포된 프론트 주소
+                "*"
+                //"http://localhost:5173",        // 로컬 개발용
+                //"https://plink-2025.netlify.app" // 배포된 프론트 주소
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
@@ -49,7 +50,7 @@ public class SecurityConfig {
                     configuration.setAllowedOriginPatterns(List.of(
                             "*"
                             //"http://localhost:5173",        // 로컬용
-                            // "https://plink-2025.netlify.app" // 배포용
+                            //"https://plink-2025.netlify.app" // 배포용
                     ));
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(List.of("*"));
@@ -63,17 +64,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**",        // 로그인, 회원가입, 게스트
-                                "/user/info",     // 로그인한 유저 조회용
-                                "/ws/**",
-                                "/ws/feed/**",
-                                "/topic/**",// 웹소켓 엔드포인트
+                                "/user/**",     // 로그인한 유저 조회용
+                                "/ws/**",         // 웹소켓 엔드포인트
                                 "/error",           // 오류 페이지 등등
                                 "/*/games/**",
                                 "/error",          // 오류 페이지 등등
-                                "/fourcuts/**",
-                                "/api/festival/**",
-                                "/favicon.ico",
-                                "/plink/festivals"
+                                "/fourcuts/**"
 
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/{slug}/posts", "/{slug}/posts/**","/{slug}/main","/{slug}/main/**").permitAll()

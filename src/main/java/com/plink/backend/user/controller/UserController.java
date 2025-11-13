@@ -49,5 +49,21 @@ public class UserController {
         throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "세션 정보가 손상되었습니다.");
     }
 
+    // 닉네임 중복체크
+    @GetMapping("/nickname-check")
+    public ResponseEntity<?> checkNickname(
+            @RequestParam String slug,
+            @RequestParam String nickname
+    ) {
+        boolean exists = userFestivalRepository.existsByNicknameAndFestivalSlug(nickname, slug);
+
+        if (exists) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("중복된 닉네임입니다.");
+        }
+
+        return ResponseEntity.ok("사용 가능한 닉네임입니다.");
+    }
+
+
 
 }

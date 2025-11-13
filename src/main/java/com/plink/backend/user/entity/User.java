@@ -30,8 +30,8 @@ public class User implements UserDetails {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(unique = true)
-    private String email; // 회원 이메일 or 게스트 식별자 (guest-xxxx)
+    @Column(unique = false)
+    private String email;
 
     @Column(nullable = false)
     private String password;
@@ -46,10 +46,27 @@ public class User implements UserDetails {
     // Soft delete 등 확장 대비용 필드
     private LocalDateTime deletedAt;
 
+    // 게임 성공 여부 필드
+    @Column(nullable = false)
+    private boolean gameSuccess = false;
+
     // 회원이 참여한 행사 리스트
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<UserFestival> festivals = new ArrayList<>();
+
+    // 게스트 → 회원 전환 메서드
+    public void updateToUser(String email, String encodedPassword, String newProfileImageUrl) {
+        this.email = email;
+        this.password = encodedPassword;
+        this.role = Role.USER;
+        this.expiresAt = null; // 회원은 만료시간 제거
+
+        // 프로필 이미지가 null이 아닐 경우에만 새로 적용
+        if (newProfileImageUrl != null && !newProfileImageUrl.isEmpty()) {
+            this.profileImageUrl = newProfileImageUrl;
+        }
+    }
 
     public boolean isGuestExpired() {
         return role == Role.GUEST && expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
@@ -98,7 +115,8 @@ public class User implements UserDetails {
         if (festivals == null) {
             festivals = new ArrayList<>();
         }
-        festivals.add(festival);
-        festival.setUser(this);
+        if (!festivals.contains(festival)) { // 중복 방지 안전장치
+            festivals.add(festival);
+            festival.setUser(this);
     }
-}
+}}
