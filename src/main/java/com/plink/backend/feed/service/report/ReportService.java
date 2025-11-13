@@ -5,6 +5,7 @@ import com.plink.backend.feed.entity.report.HiddenContent;
 import com.plink.backend.feed.entity.report.Report;
 import com.plink.backend.feed.repository.report.HiddenContentRepository;
 import com.plink.backend.feed.repository.report.ReportRepository;
+import com.plink.backend.feed.service.post.PostService;
 import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;
@@ -19,15 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportService {
     private final ReportRepository reportRepository;
     private final HiddenContentRepository hiddenContentRepository;
-    private final UserFestivalRepository userFestivalRepository;
+    private final PostService postService;
 
     @Transactional
     public void createReport(User reporter, ReportRequest request,String slug) {
 
         // 작성자-축제 매핑 검증
-        UserFestival userFestival = userFestivalRepository
-                .findByUser_UserIdAndFestivalSlug(reporter.getUserId(), slug)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
+        UserFestival userFestival = postService.getVerifiedUserFestival(reporter, slug);
 
         // 신고 저장
         Report report = Report.builder()

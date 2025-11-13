@@ -16,14 +16,12 @@ import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.festival.repository.FestivalRepository;
 import com.plink.backend.festival.entity.Festival;
 import com.plink.backend.commonS3.S3Service;
-import com.plink.backend.feed.repository.post.ImageRepository;
 import com.plink.backend.feed.repository.post.PostRepository;
 import com.plink.backend.feed.repository.tag.TagRepository;
 import com.plink.backend.feed.dto.post.PostUpdateRequest;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
-import com.plink.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,22 +48,25 @@ import java.util.Optional;
 public class PostService {
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
-    private final ImageRepository imageRepository;
     private final S3Service s3Service;
     private final FestivalRepository festivalRepository;
     private final UserFestivalRepository userFestivalRepository;
     private final HiddenContentRepository hiddenContentRepository;
     private final PollService pollService;
     private final ImageService imageService;
-    private final UserService userService;
 
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
 
+    // 공통 검증 메서드
+    public UserFestival getVerifiedUserFestival(User user, String slug) {
+        return userFestivalRepository.findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                .orElseThrow(() ->
+                        new CustomException(HttpStatus.FORBIDDEN, "해당 축제에 참여한 사용자가 아닙니다."));
+    }
 
     @Transactional
     // 게시글 작성하기
-
     public Post createPost(User author, PostCreateRequest request, String slug)  throws IOException {
 
         // 행사 검증
@@ -77,10 +78,7 @@ public class PostService {
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,"존재하지 않는 태그입니다."));
 
         // 작성자-축제 매핑 검증
-        UserFestival userFestival = userFestivalRepository
-                .findByUser_UserIdAndFestivalSlug(author.getUserId(), slug)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
-
+        UserFestival userFestival = getVerifiedUserFestival(author, slug);
 
 
         // 기본 내용 검증
@@ -111,7 +109,7 @@ public class PostService {
 
         // 이미지 추가
         if (request.getImages() != null && !request.getImages().isEmpty()) {
-            imageService.saveImages(post.getId(), request.getImages());
+            imageService.saveImages(author,post.getId(), request.getImages());
         }
 
         // 최종 저장
@@ -124,7 +122,6 @@ public class PostService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-
                     String slugPath = "/topic/" + festivalSlug + "/posts";
                     String tagPath = slugPath + "/" + tagId;
 
@@ -142,16 +139,16 @@ public class PostService {
 
     }
 
-
     // 게시글 수정
     @Transactional
     public Post updatePost(User author,PostUpdateRequest request,Long postId)throws IOException {
+
         Post post = postRepository.findById(postId)
-                .orElseThrow(()->new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."));
 
         // 작성자만 수정 권한을 가짐
         if (!post.getAuthor().getUser().getUserId().equals(author.getUserId())) {
-            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
+            throw new CustomException(HttpStatus.FORBIDDEN, "게시글 수정 권한이 없습니다.");
         }
 
         // 제목 수정 (값이 들어온 경우에만)
@@ -176,15 +173,15 @@ public class PostService {
 
     // 게시글 삭제
     @Transactional
-    public void deletePost(User author,Long postId) {
+    public void deletePost(User author,Long postId,String slug) {
+
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() ->new CustomException(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."));
 
         // 작성자만 삭제 권한을 가짐
         if (!post.getAuthor().getUser().getUserId().equals(author.getUserId())) {
-            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
+            throw new CustomException(HttpStatus.FORBIDDEN, "게시글 삭제 권한이 없습니다.");
         }
-
 
         // 이미지 삭제
         if (post.getImages() != null) {
@@ -192,12 +189,11 @@ public class PostService {
                 try {
                     s3Service.delete(image.getS3key());
                 } catch (Exception e) {
-                    System.out.println("S3 이미지 삭제 실패: {}"+ image.getS3key());
+                    log.warn("S3 이미지 삭제 실패: key={}, message={}", image.getS3key(), e.getMessage());
                 }
             }
-
         }
-        String slug = post.getFestival().getSlug();
+
         Long tagId = post.getTag() != null ? post.getTag().getId() : null;
         Long deletedPostId = post.getId();
 
@@ -226,7 +222,6 @@ public class PostService {
         });
     }
 
-
     // 게시글 상세 조회 (댓글까지 모두 포함)
     @Transactional(readOnly = true)
     public PostDetailResponse getPostDetail(User user, String slug, Long postId) {
@@ -239,9 +234,7 @@ public class PostService {
 
         // 로그인을 한 사용자
         if (user != null) {
-            UserFestival userFestival = userFestivalRepository
-                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 사용자를 찾을 수 없습니다."));
+            UserFestival userFestival = getVerifiedUserFestival(user, slug);
 
             List<Long> hiddenPostIds = hiddenContentRepository
                     .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.POST);
@@ -261,7 +254,6 @@ public class PostService {
 
         return PostDetailResponse.from(post,hiddenCommentIds);
     }
-
 
     // 게시글 전체 조회
     @Transactional(readOnly = true)
@@ -286,5 +278,4 @@ public class PostService {
         Slice<PostResponse> mapped = posts.map(PostResponse::from);
         return PostResponse.SliceResult.from(mapped);
     }
-
 }

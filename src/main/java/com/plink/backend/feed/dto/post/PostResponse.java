@@ -33,7 +33,6 @@ public class PostResponse {
     private int likeCount;
     private PollResponse poll;
 
-
     public static PostResponse from(Post post) {
         return PostResponse.builder()
                 .id(post.getId())

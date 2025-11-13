@@ -42,22 +42,17 @@ public class PostController {
     private final HiddenContentRepository hiddenContentRepository;
     private final UserFestivalRepository userFestivalRepository;
 
-    // 게시글 작성 (POST 요청)
+    // 게시글 작성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createPost(
             @PathVariable String slug,
             @AuthenticationPrincipal User user,
             @ModelAttribute PostCreateRequest request) throws IOException {
 
-        if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
-        }
-
         Post post = postService.createPost(user, request,slug);
-        PostResponse response = PostResponse.from(post); // 엔티티 → DTO 변환
+        PostResponse response = PostResponse.from(post);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
     }
 
     // 게시글 수정 (PATCH)
@@ -65,47 +60,34 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> updatePost(
             @PathVariable String slug,
             @PathVariable Long postId,
+            @AuthenticationPrincipal User user,
             @ModelAttribute PostUpdateRequest request) throws IOException {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("수정 권한이 없습니다.");
-        }
-
-        User user = (User) authentication.getPrincipal();
 
         Post updated = postService.updatePost(user, request, postId);
 
         List<Long> hiddenCommentIds = List.of();
-        if (user != null) {
-            UserFestival userFestival = userFestivalRepository
-                    .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
-                    .orElse(null);
 
-            if (userFestival != null) {
-                hiddenCommentIds = hiddenContentRepository
-                        .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
-            }
+        UserFestival userFestival = userFestivalRepository
+                .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                .orElse(null);
+
+        if (userFestival != null) {
+            hiddenCommentIds = hiddenContentRepository
+                    .findTargetIdsByUserFestivalAndTargetType(userFestival, ReportTargetType.COMMENT);
         }
 
         PostDetailResponse response = PostDetailResponse.from(updated, hiddenCommentIds);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.ok(response);
     }
 
     // 게시글 삭제 (DELETE)
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
             @PathVariable String slug,
-            @PathVariable Long postId)
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user)
     {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("삭제 권한이 없습니다.");
-        }
-
-        User user = (User) authentication.getPrincipal();
-        postService.deletePost(user, postId);
+        postService.deletePost(user, postId, slug);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
