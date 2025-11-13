@@ -31,7 +31,7 @@ public class SecurityConfig {
                 "http://localhost:5173",        // 로컬 개발용
                 "https://plink-2025.netlify.app" // 배포된 프론트 주소
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -51,7 +51,7 @@ public class SecurityConfig {
                             //"http://localhost:5173",        // 로컬용
                             // "https://plink-2025.netlify.app" // 배포용
                     ));
-                    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                     configuration.setAllowedHeaders(List.of("*"));
                     configuration.setAllowCredentials(true);
                     return configuration;
