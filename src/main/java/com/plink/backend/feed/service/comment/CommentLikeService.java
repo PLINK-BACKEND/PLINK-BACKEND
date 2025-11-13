@@ -5,6 +5,7 @@ import com.plink.backend.feed.entity.comment.Comment;
 import com.plink.backend.feed.entity.comment.CommentLike;
 import com.plink.backend.feed.repository.comment.CommentLikeRepository;
 import com.plink.backend.feed.repository.comment.CommentRepository;
+import com.plink.backend.feed.service.post.PostService;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
@@ -18,7 +19,7 @@ public class CommentLikeService {
 
     private final CommentLikeRepository commentLikeRepository;
     private final CommentRepository commentRepository;
-    private final UserFestivalRepository UserFestivalRepository;
+    private final PostService postService;
 
     @Transactional
     public LikeResponse Like(User user, Long commentId, String slug) {
@@ -27,10 +28,8 @@ public class CommentLikeService {
         Comment comment = commentRepository.findById(commentId).
                 orElseThrow(()-> new IllegalArgumentException("존재하지 않는 댓글입니다."));
 
-        // 로그인한 유저의 UserFestival 조회
-        UserFestival userFestival = UserFestivalRepository
-                .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
-                .orElseThrow(() -> new IllegalArgumentException("해당 축제에서 유저를 찾을 수 없습니다."));
+        // 작성자-축제 매핑 검증
+        UserFestival userFestival = postService.getVerifiedUserFestival(user, slug);
 
         boolean liked;
 

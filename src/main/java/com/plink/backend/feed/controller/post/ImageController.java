@@ -22,7 +22,7 @@ public class ImageController {
     private final ImageService imageService;
     private final PostRepository postRepository;
 
-    /** 게시글 이미지 업로드 */
+    // 이미지 추가
     @PostMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> uploadImages(
             @PathVariable Long postId,
@@ -36,7 +36,7 @@ public class ImageController {
         return ResponseEntity.ok(PostDetailResponse.from(post));
     }
 
-    /** ✅ 게시글 이미지 삭제 */
+    // 이미지 삭제
     @DeleteMapping("/{imageId}")
     public ResponseEntity<PostDetailResponse> deleteImage(@PathVariable Long imageId) {
         Post post = imageService.deleteImageAndReturnPost(imageId);

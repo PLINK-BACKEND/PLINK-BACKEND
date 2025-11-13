@@ -26,9 +26,6 @@ public class PostLikeController {
             @PathVariable Long postId
 
     ){
-        if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
-        }
         LikeResponse response = postLikeService.Like(user, postId, slug);
         return ResponseEntity.ok(response);
     }

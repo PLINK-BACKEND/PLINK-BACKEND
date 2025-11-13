@@ -4,11 +4,11 @@ import com.plink.backend.feed.dto.comment.CommentRequest;
 import com.plink.backend.feed.dto.comment.CommentResponse;
 import com.plink.backend.feed.entity.comment.Comment;
 import com.plink.backend.feed.entity.post.Post;
+import com.plink.backend.feed.service.post.PostService;
 import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.repository.comment.CommentRepository;
 import com.plink.backend.feed.repository.post.PostRepository;
-import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.entity.UserFestival;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,20 +32,22 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-    private final UserFestivalRepository userFestivalRepository;
+    private final PostService postService;
+
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
     // 댓글 작성하기
     @Transactional
     public CommentResponse createComment(User author, CommentRequest request, String slug, Long postId) {
 
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        // 작성자-축제 매핑 검증
+        UserFestival userFestival = postService.getVerifiedUserFestival(author, slug);
 
-        UserFestival userFestival = userFestivalRepository
-                .findByUser_UserIdAndFestivalSlug(author.getUserId(), post.getFestival().getSlug())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 축제에서 유저를 찾을 수 없습니다."));
+        // 게시글 검증
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,"존재하지 않는 게시글입니다."));
 
         Comment comment = Comment.builder()
                 .author(userFestival)
@@ -53,12 +55,13 @@ public class CommentService {
                 .content(request.getContent())
                 .build();
 
+        // 댓글 개수 증가
         post.increaseCommentCount();
         commentRepository.save(comment);
 
         CommentResponse response = CommentResponse.from(comment);
 
-        // DB 커밋 완료 후 메시지 전송 (게시글 방식 동일)
+        // 웹소켓 메세지 전송
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
@@ -75,13 +78,15 @@ public class CommentService {
     // 댓글 수정하기
     @Transactional
     public Comment updateComment( User author, CommentRequest request,Long commentId) {
+
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,"존재하지 않는 댓글입니다."));
 
         // 작성자만 수정 권한을 가짐
         if (!comment.getAuthor().getUser().getUserId().equals(author.getUserId())) {
-            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
+            throw new CustomException(HttpStatus.FORBIDDEN, "댓글 수정 권한이 없습니다.");
         }
+
         comment.updateContent(request.getContent());
         return commentRepository.save(comment);
 
@@ -90,13 +95,15 @@ public class CommentService {
     // 댓글 삭제하기
     @Transactional
     public void deleteComment( User author, Long commentId) {
+
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."));
 
         if (!comment.getAuthor().getUser().getUserId().equals(author.getUserId())) {
-            throw new SecurityException("본인만 댓글을 삭제할 수 있습니다.");
+            throw new CustomException(HttpStatus.FORBIDDEN,"본인만 댓글을 삭제할 수 있습니다.");
         }
 
+        // 웹소켓 전송을 위해 정보 저장
         Post post = comment.getPost();
         Long postId = post.getId();
         String slug = post.getFestival().getSlug();
@@ -110,10 +117,10 @@ public class CommentService {
             @Override
             public void afterCommit() {
                 Map<String, Object> payload = new HashMap<>();
-                payload.put("type", "DELETE");        // 이벤트 타입
-                payload.put("id", deletedCommentId);  // 삭제된 댓글 ID
-                payload.put("deleted", true);         // 삭제 여부 플래그
+                payload.put("id", deletedCommentId);
+                payload.put("deleted", true);
 
+                // 상세 조회에 전송
                 String topicPath = String.format("/topic/%s/posts/%d/comments", slug, postId);
 
                 log.info(" 댓글 삭제 전송: {}", topicPath);
@@ -127,7 +134,7 @@ public class CommentService {
     @Transactional
     public List<CommentResponse> getCommentsByPost(Long postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,"존재하지 않는 게시글입니다."));
 
         List<Comment> comments = commentRepository.findByPostOrderByCreatedAtAsc(post);
         return comments.stream()

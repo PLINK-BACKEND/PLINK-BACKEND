@@ -1,6 +1,7 @@
 package com.plink.backend.feed.service.poll;
 
 import com.plink.backend.feed.entity.poll.PollVote;
+import com.plink.backend.global.exception.CustomException;
 import com.plink.backend.user.service.UserService;
 import com.plink.backend.user.entity.User;
 import com.plink.backend.feed.dto.poll.PollCreateRequest;
@@ -11,6 +12,7 @@ import com.plink.backend.feed.repository.poll.PollOptionRepository;
 import com.plink.backend.feed.repository.poll.PollRepository;
 import com.plink.backend.feed.repository.poll.PollVoteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,21 +50,20 @@ public class PollService {
     @Transactional
     public PollResponse vote(Long pollId, Long optionId, Long voterId) {
         Poll poll = pollRepository.findById(pollId)
-                .orElseThrow(() -> new IllegalArgumentException("투표를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "투표를 찾을 수 없습니다."));
 
 
         PollOption option = pollOptionRepository.findById(optionId)
-                .orElseThrow(() -> new IllegalArgumentException("선택지를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "선택지를 찾을 수 없습니다."));
         if (!option.getPoll().getId().equals(pollId)) {
-            throw new IllegalArgumentException("선택지와 투표가 일치하지 않습니다.");
+            throw new  CustomException(HttpStatus.BAD_REQUEST, "선택지와 투표가 일치하지 않습니다.");
         }
 
         User voter = userService.getById(voterId);
 
         // 중복투표 체크
         if (pollVoteRepository.existsByPollAndVoter(poll, voter)) {
-            throw new IllegalStateException("이미 투표했습니다.");
+            throw new CustomException(HttpStatus.CONFLICT, "이미 투표했습니다.");
         }
 
         // 집계
@@ -81,7 +82,6 @@ public class PollService {
         return PollResponse.from(poll, selectedOptionId);
     }
 
-
     @Transactional(readOnly = true)
     public PollResponse getPollResponse(Poll poll, User user) {
         Long selectedOptionId = null;
@@ -94,6 +94,5 @@ public class PollService {
 
         return PollResponse.from(poll, selectedOptionId);
     }
-
 
 }

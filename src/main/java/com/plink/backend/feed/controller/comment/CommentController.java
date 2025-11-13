@@ -19,7 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/{slug}/posts")
 public class CommentController {
-
     private final CommentService commentService;
 
     // 댓글 작성
@@ -30,9 +29,6 @@ public class CommentController {
             @AuthenticationPrincipal User user,
             @ModelAttribute CommentRequest request
     ) {
-        if (user == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
-        }
 
         CommentResponse response = commentService.createComment(user, request, slug, postId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -43,16 +39,9 @@ public class CommentController {
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable String slug,
             @PathVariable Long commentId,
+            @AuthenticationPrincipal User user,
             @ModelAttribute CommentRequest request
     ){
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("수정 권한이 없습니다.");
-        }
-
-        User user = (User) authentication.getPrincipal();
 
         Comment updated = commentService.updateComment(user, request,commentId);
 
@@ -72,15 +61,9 @@ public class CommentController {
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable String slug,
+            @AuthenticationPrincipal User user,
             @PathVariable Long commentId)
     {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("삭제 권한이 없습니다.");
-        }
-
-        User user = (User) authentication.getPrincipal();
-
         commentService.deleteComment(user,commentId);
         return ResponseEntity.noContent().build();
     }
