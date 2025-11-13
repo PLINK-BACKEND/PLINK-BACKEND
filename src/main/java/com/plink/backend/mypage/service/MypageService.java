@@ -68,6 +68,22 @@ public class MypageService {
                 .toList();
     }
 
+    // 검색
+    public List<PostResponse> searchMyPosts(Long userId, String keyword) {
+        List<Post> posts = postRepository.searchMyPosts(userId, keyword);
+        return posts.stream().map(PostResponse::from).toList();
+    }
+
+    public List<PostResponse> searchMyLikedPosts(Long userId, String keyword) {
+        List<Post> posts = postLikeRepository.searchMyLikedPosts(userId, keyword);
+        return posts.stream().map(PostResponse::from).toList();
+    }
+
+    public List<PostResponse> searchMyCommentedPosts(Long userId, String keyword) {
+        List<Post> posts = commentRepository.searchMyCommentedPosts(userId, keyword);
+        return posts.stream().map(PostResponse::from).toList();
+    }
+
     // 프로필 수정
     @Transactional
     public UserResponse updateProfile(User user, String slug, String nickname, MultipartFile profileImage, String defaultProfileUrl) throws IOException {
