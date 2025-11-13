@@ -52,9 +52,10 @@ public class SecurityConfig {
                             //"http://localhost:5173",        // 로컬용
                             //"https://plink-2025.netlify.app" // 배포용
                     ));
-                    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                     configuration.setAllowedHeaders(List.of("*"));
                     configuration.setAllowCredentials(true);
+                    configuration.setExposedHeaders(List.of("Set-Cookie"));
                     return configuration;
                 }))
                 // CSRF 비활성화 (Postman 테스트용)

@@ -16,6 +16,7 @@ spring:
     timeout: 24h
     cookie:
       same-site: none
+      secure: false # http일 때, false이다! 만약 https로 바꾸면 true로 바꿔야 한다!!!
 
 
 cloud:
