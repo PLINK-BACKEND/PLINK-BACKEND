@@ -53,10 +53,8 @@ public class AuthService {
         // 1. slug가 있는 경우: 게스트 → 회원 전환
         if (slug != null && !slug.isBlank()) {
             // 같은 slug + nickname으로 존재하는 게스트 찾기
-            UserFestival uf = userFestivalRepository.findByNicknameAndFestivalSlug(request.getNickname(), slug)
+            User guest = userFestivalRepository.findByNicknameAndFestivalSlug(request.getNickname(), slug)
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "게스트 계정을 찾을 수 없습니다."));
-
-            User guest = uf.getUser();
 
             if (guest.getRole() != Role.GUEST) {
                 throw new CustomException(HttpStatus.CONFLICT, "이미 회원으로 등록된 닉네임입니다.");
