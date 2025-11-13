@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class UserFestivalService {
 
     private final UserRepository userRepository;
@@ -30,6 +30,10 @@ public class UserFestivalService {
         String slug = request.getSlug();
         String nickname = request.getNickname();
 
+        // 세션에서 받은 user는 detached 상태이므로, 다시 영속화 시켜줌
+        User persistentUser = userRepository.findById(user.getUserId())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
         // 유효성 검사
         if (slug == null || slug.isBlank()) {
             throw new CustomException(HttpStatus.BAD_REQUEST, "유효하지 않은 축제 slug입니다.");
@@ -38,7 +42,7 @@ public class UserFestivalService {
             throw new CustomException(HttpStatus.BAD_REQUEST, "닉네임은 필수 입력 값입니다.");
         }
 
-        // 닉네임 중복검사 (slug별로 게스트/회원 통합)
+        // 닉네임 중복검사 (slug별로, 게스트/회원 통합)
         if (userFestivalRepository.existsByFestivalSlugAndNickname(slug, nickname)) {
             throw new CustomException(HttpStatus.CONFLICT, "이 축제에서 이미 사용 중인 닉네임입니다.");
         }

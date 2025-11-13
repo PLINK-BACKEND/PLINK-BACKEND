@@ -51,7 +51,7 @@ public class User implements UserDetails {
     private boolean gameSuccess = false;
 
     // 회원이 참여한 행사 리스트
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<UserFestival> festivals = new ArrayList<>();
 
@@ -115,7 +115,8 @@ public class User implements UserDetails {
         if (festivals == null) {
             festivals = new ArrayList<>();
         }
-        festivals.add(festival);
-        festival.setUser(this);
+        if (!festivals.contains(festival)) { // 중복 방지 안전장치
+            festivals.add(festival);
+            festival.setUser(this);
     }
-}
+}}
