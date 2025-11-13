@@ -45,11 +45,22 @@ public class AuthService {
     @Value("${cloud.aws.s3.base-url}")
     private String s3BaseUrl;
 
+
+
     // 회원가입 (User 생성 + UserFestival에 등록)
     @Transactional
     public UserResponse signUp(SignUpRequest request) throws IOException {
         String slug = request.getSlug();
 
+        // 세션에 게스트가 있는 경우 → 신규 회원 생성 대신 업그레이드 수행
+        User guest = (User) session.getAttribute("guest");
+        if (guest != null) {
+            return upgradeGuestToUser(guest, request);
+        }
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
+        }
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
@@ -104,6 +115,84 @@ public class AuthService {
         return new UserResponse(user, festival);
     }
 
+    // GUEST -> USER 승격 로직
+    @Transactional
+    public UserResponse upgradeGuestToUser(User guest, SignUpRequest request) throws IOException {
+
+        // (1) 이메일 중복 체크
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
+        }
+
+        // (2) 프로필 업로드 여부 판단
+        String imageUrl = guest.getProfileImageUrl();
+        if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+
+            S3UploadResult uploadResult = s3Service.upload(request.getProfileImage(), "profiles");
+            if (uploadResult.getUrl() != null) {
+                imageUrl = uploadResult.getUrl();
+            } else {
+                imageUrl = s3BaseUrl + "/" + uploadResult.getKey();
+            }
+        }
+
+        // (3) 새 User 생성 (정식 회원으로)
+        User newUser = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .profileImageUrl(imageUrl)
+                .role(Role.USER)
+                .createdAt(guest.getCreatedAt())    // 게스트 생성시간 유지
+                .build();
+        userRepository.save(newUser);
+        // (5) 기존 게스트의 UserFestival 조회
+                List<UserFestival> guestFestivals = userFestivalRepository.findByUser_UserId(guest.getUserId());
+
+                String newNickname = request.getNickname();
+
+                for (UserFestival festival : guestFestivals) {
+
+                    // user 소유권을 newUser로 변경
+                    festival.setUser(newUser);
+
+                    // nickname 업데이트
+                    if (newNickname != null && !newNickname.isBlank()) {
+                        if (userFestivalRepository.existsByFestivalSlugAndNickname(
+                                festival.getFestivalSlug(), newNickname)) {
+
+                            if (!festival.getNickname().equals(newNickname)) {
+                                throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
+                            }
+                        }
+                        festival.setNickname(newNickname);
+                    }
+
+                    // 변경을 즉시 DB에 반영
+                    userFestivalRepository.save(festival);
+                }
+
+        // guest 삭제는 반드시 소유권 변경/저장 후에 실행해야 함!
+                // 삭제 대신 guest 비활성화 처리
+                guest.setDeletedAt(LocalDateTime.now());
+                guest.setExpiresAt(null);
+                guest.setRole(Role.DELETED); // 새 ENUM 추가 추천
+
+                session.removeAttribute("guest");
+
+
+        // (7) 세션에서 guest 제거
+        session.removeAttribute("guest");
+
+        // (8) 대표 축제를 가져오기
+        UserFestival festival =
+                userFestivalRepository.findByUser_UserId(newUser.getUserId())
+                        .stream()
+                        .findFirst()
+                        .orElse(null);
+
+        return new UserResponse(newUser, festival);
+    }
+
     // 회원 로그인
     @Transactional
     public UserResponse login(LoginRequest req, HttpServletRequest request) {
@@ -113,6 +202,10 @@ public class AuthService {
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
         }
+
+        // UserFestival을 userId 기반으로 fresh하게 DB에서 다시 조회
+        List<UserFestival> festivals = userFestivalRepository.findByUser_UserId(user.getUserId());
+        UserFestival festival = festivals.isEmpty() ? null : festivals.get(0);
 
         // Spring Security 인증 객체 생성
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
@@ -126,9 +219,7 @@ public class AuthService {
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 SecurityContextHolder.getContext());
 
-        List<UserFestival> festivals = userFestivalRepository.findByUser_UserId(user.getUserId());
-        UserFestival festival = festivals.isEmpty() ? null : festivals.get(0);
-
+        // UserResponse는 newUser + festival이 확정적으로 들어갈 수 있게 됨
         return new UserResponse(user, festival);
     }
 
@@ -195,11 +286,4 @@ public class AuthService {
         return new UserResponse(guest, festival);
     }
 
-    // 게스트 -> 회원 데이터 이전 (임시)
-    @Transactional
-    public void migrateGuestToUser(String guestId, User user) {
-        userRepository.findByEmail(guestId).ifPresent(guest -> {
-            userRepository.delete(guest);
-        });
-    }
 }
