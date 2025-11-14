@@ -12,4 +12,5 @@ import lombok.Setter;
 public class GameScoreRequest {
     private int score;
     private String nickname;
+    private boolean success;
 }
