@@ -30,7 +30,6 @@ public class Post {
     @Column(nullable = false)
     private PostType postType;
 
-    @Column(nullable = false)
     private String title;
 
     private String content;
