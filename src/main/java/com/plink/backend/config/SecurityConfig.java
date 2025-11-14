@@ -70,6 +70,7 @@ public class SecurityConfig {
                                 "/*/games/**",
                                 "/error",          // 오류 페이지 등등
                                 "/fourcuts/**",
+                                "/*/fourcuts/secret",
                                 "/api/festival/**",
                                 "/favicon.ico",
                                 "/plink/festivals"

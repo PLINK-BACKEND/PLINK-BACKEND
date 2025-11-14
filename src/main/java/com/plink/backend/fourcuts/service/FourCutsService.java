@@ -4,8 +4,13 @@ import com.plink.backend.commonS3.S3Service;
 import com.plink.backend.commonS3.S3UploadResult;
 import com.plink.backend.fourcuts.dto.FourCutsResponse;
 import com.plink.backend.fourcuts.util.QRCodeUtil;
+import com.plink.backend.user.entity.User;
+import com.plink.backend.user.entity.UserFestival;
+import com.plink.backend.user.repository.UserFestivalRepository;
+import com.plink.backend.user.role.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -18,6 +23,7 @@ public class FourCutsService {
 
     private final S3Service s3Service;
     private final QRCodeUtil qrCodeUtil;
+    private final UserFestivalRepository userFestivalRepository;
 
     public FourCutsResponse uploadFourCut(MultipartFile file) {
         try {
@@ -67,5 +73,25 @@ public class FourCutsService {
         } catch (Exception e) {
             throw new RuntimeException("네컷사진 업로드 실패: " + e.getMessage(), e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isSecretFrameUnlocked(String slug, User user) {
+
+        // 로그인 안 된 경우 무조건 false
+        if (user == null) {
+            return false;
+        }
+
+        // GUEST 또는 DELETED는 절대 시크릿 프레임 접근 불가
+        if (user.getRole() != Role.USER) {
+            return false;
+        }
+
+        // USER인 경우 slug 기반 UserFestival 조회
+        return userFestivalRepository
+                .findByUser_UserIdAndFestivalSlug(user.getUserId(), slug)
+                .map(UserFestival::isSecretFrameUnlocked)
+                .orElse(false);
     }
 }
