@@ -1,14 +1,26 @@
 package com.plink.backend.config;
 
 
+import com.plink.backend.game.websocket.GameWebSocketHandler;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
-@EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+@EnableWebSocketMessageBroker // STOMP
+@EnableWebSocket // Native 웹소켓
+@RequiredArgsConstructor
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSocketConfigurer {
+
+    private final GameWebSocketHandler gameWebSocketHandler;
+
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(gameWebSocketHandler, "/ws/game")   // 커스텀 엔드포인트
+                .setAllowedOrigins("*");
+    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
