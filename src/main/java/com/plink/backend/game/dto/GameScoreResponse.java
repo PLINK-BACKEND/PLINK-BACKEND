@@ -9,6 +9,6 @@ import lombok.Getter;
 @Builder
 public class GameScoreResponse {
     private String nickname;
-    private int score;
+    private double score;
     private int rank;
 }

@@ -13,5 +13,5 @@ public interface GameScoreRepository extends JpaRepository<GameScore, Long> {
     Optional<GameScore> findTopByFestivalSlugAndNicknameOrderByScoreDesc(String slug, String nickname);
 
     @Query("SELECT COUNT(gs) + 1 FROM GameScore gs WHERE gs.game.id = :gameId AND gs.festivalSlug = :slug AND gs.score > :score")
-    int findRankByScore(Long gameId, String slug, int score);
+    int findRankByScore(Long gameId, String slug, double score);
 }

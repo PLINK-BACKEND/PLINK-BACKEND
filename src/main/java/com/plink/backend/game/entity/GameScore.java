@@ -32,7 +32,7 @@ public class GameScore {
     private String festivalSlug;
 
     @Column(nullable = false)
-    private int score;
+    private double score;
 
     @Column(nullable = false)
     private String role;
