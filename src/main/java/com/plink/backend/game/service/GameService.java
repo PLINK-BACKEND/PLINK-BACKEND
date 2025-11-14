@@ -31,18 +31,19 @@ public class GameService {
         Game game = gameRepository.findByIdAndFestivalSlug(gameId, slug)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게임이 존재하지 않습니다."));
 
+        boolean success = request.isSuccess();
+
         // 닉네임 결정 로직
         String nickname;
         String role;
+        UserFestival uf = null;
 
         if (user != null && user.getRole() != null && user.getRole().name().equals("USER")) {
-            // 로그인 유저 → UserFestival에서 닉네임 찾기
-            UserFestival uf = userFestivalRepository.findByUserAndFestivalSlug(user, slug)
+            uf = userFestivalRepository.findByUserAndFestivalSlug(user, slug)
                     .orElseThrow(() -> new IllegalArgumentException("해당 행사에 등록된 유저 닉네임이 없습니다."));
             nickname = uf.getNickname();
             role = "USER";
         } else {
-            // 게스트 접근 → RequestParam 닉네임 그대로 사용
             nickname = request.getNickname();
             role = "GUEST";
         }
@@ -58,15 +59,13 @@ public class GameService {
 
         gameScoreRepository.save(score);
 
-
         // Secret Frame 해금 로직
-        if (user != null && user.getRole().name().equals("USER") && request.isSuccess()) {
-
-            UserFestival uf = userFestivalRepository.findByUserAndFestivalSlug(user, slug)
-                    .orElseThrow(() -> new IllegalArgumentException("유저의 축제 정보가 없습니다."));
-
-            uf.setSecretFrameUnlocked(true);
-            userFestivalRepository.save(uf);
+        if (uf != null && request.isSuccess()) {
+            // 성공이면 무조건 해금 (false→true, true→true)
+            if (!uf.isSecretFrameUnlocked()) {
+                uf.setSecretFrameUnlocked(true);
+                userFestivalRepository.save(uf);
+            }
         }
     }
 
