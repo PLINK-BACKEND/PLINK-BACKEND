@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/festival")
+@RequestMapping("/plink/festival")
 @RequiredArgsConstructor
 
 public class TrackingApiController {

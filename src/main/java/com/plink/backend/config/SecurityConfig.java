@@ -72,7 +72,7 @@ public class SecurityConfig {
                                 "/fourcuts/**",
                                 "/api/festival/**",
                                 "/favicon.ico",
-                                "/plink/festivals"
+                                "/plink/festivals/**"
                         ).permitAll()
 
                         // 공개 GET 요청
