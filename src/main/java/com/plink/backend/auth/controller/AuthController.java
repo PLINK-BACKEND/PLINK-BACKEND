@@ -8,8 +8,10 @@ import com.plink.backend.auth.service.AuthService;
 import com.plink.backend.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,8 +42,12 @@ public class AuthController {
 
     // 회원 로그아웃
     @PostMapping("/logout")
-    public void logout() {
-        authService.logout();
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+
+        // AuthService로 세션 제거 + 쿠키 삭제까지 처리
+        authService.logout(request, response);
+
+        return ResponseEntity.ok().build();
     }
 
     // 게스트 세션 생성
