@@ -25,7 +25,7 @@ public class GameController {
             @PathVariable String slug,
             @PathVariable Long gameId,
             @RequestParam String nickname,
-            @RequestParam int score,
+            @RequestParam Double score,
             @RequestParam boolean success,
             @AuthenticationPrincipal User user
     ) {

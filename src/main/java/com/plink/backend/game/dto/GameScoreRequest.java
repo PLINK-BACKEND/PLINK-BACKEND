@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GameScoreRequest {
-    private int score;
+    private Double score;
     private String nickname;
     private boolean success;
 }
