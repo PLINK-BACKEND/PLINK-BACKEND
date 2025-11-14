@@ -69,18 +69,17 @@ jobs:
 
             echo "🚀 새 컨테이너 실행..."
             docker run -d --network host --name myapp --restart always \
-              -e SPRING_PROFILES_ACTIVE=prod \
-              -e DB_HOST=${{ secrets.DB_HOST }} \
-              -e DB_PORT=${{ secrets.DB_PORT }} \
-              -e DB_NAME=${{ secrets.DB_NAME }} \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
-              -e S3_BASE_URL=${{ secrets.S3_BASE_URL }} \
-              -e S3_REGION=${{ secrets.S3_REGION }} \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              myapp
+            -e SPRING_PROFILES_ACTIVE=prod \
+            -e SPRING_DATASOURCE_URL="jdbc:mysql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?serverTimezone=Asia/Seoul" \
+            -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
+            -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
+            -e S3_BASE_URL=${{ secrets.S3_BASE_URL }} \
+            -e S3_REGION=${{ secrets.S3_REGION }} \
+            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            myapp
+
 
             echo "✅ 실행 중인 컨테이너 확인:"
             docker ps -a
