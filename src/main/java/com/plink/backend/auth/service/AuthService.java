@@ -10,7 +10,9 @@ import com.plink.backend.user.entity.UserFestival;
 import com.plink.backend.user.repository.UserFestivalRepository;
 import com.plink.backend.user.repository.UserRepository;
 import com.plink.backend.user.role.Role;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +31,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ResponseCookie;
+
 
 @Slf4j
 @Service
@@ -223,10 +227,25 @@ public class AuthService {
         return new UserResponse(user, festival);
     }
 
-    // 로그아웃(세션 무효화)
+    // 로그아웃 시 세션 무효화 + 쿠키 삭제
     @Transactional
-    public void logout() {
-        session.invalidate();
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+
+        // 1) 현재 세션 invalidate
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        // 2) JSESSIONID 쿠키 삭제 (브라우저·포스트맨에서 보이는 쿠키 제거)
+        Cookie cookie = new Cookie("JSESSIONID", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // 즉시 삭제
+        response.addCookie(cookie);
+
+        log.info("로그아웃 완료: 세션 및 JSESSIONID 쿠키 삭제됨.");
     }
 
     // 게스트 계정 생성
