@@ -57,6 +57,17 @@ public class GameService {
                 .build();
 
         gameScoreRepository.save(score);
+
+
+        // Secret Frame 해금 로직
+        if (user != null && user.getRole().name().equals("USER") && request.isSuccess()) {
+
+            UserFestival uf = userFestivalRepository.findByUserAndFestivalSlug(user, slug)
+                    .orElseThrow(() -> new IllegalArgumentException("유저의 축제 정보가 없습니다."));
+
+            uf.setSecretFrameUnlocked(true);
+            userFestivalRepository.save(uf);
+        }
     }
 
     @Transactional(readOnly = true)

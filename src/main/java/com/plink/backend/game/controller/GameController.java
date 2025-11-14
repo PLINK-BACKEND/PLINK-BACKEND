@@ -19,16 +19,17 @@ public class GameController {
     private final GameService gameService;
     private final GameWebSocketHandler gameWebSocketHandler;
 
-    // 게임 완료 시점에 클리어 데이터 저장 후 닉네임 방송
+    // 게임 완료 시점에 클리어 데이터 저장 후 닉네임 방송 (점수 저장 + 성공여부 전달)
     @PostMapping("/{gameId}/clear")
     public ResponseEntity<Void> clearAndSaveScore(
             @PathVariable String slug,
             @PathVariable Long gameId,
             @RequestParam String nickname,
             @RequestParam int score,
+            @RequestParam boolean success,
             @AuthenticationPrincipal User user
     ) {
-        gameService.submitScore(slug, gameId, new GameScoreRequest(score, nickname), user);
+        gameService.submitScore(slug, gameId, new GameScoreRequest(score, nickname, success), user);
 
         String message = nickname + "님이 게임을 클리어했습니다! (점수: " + score + ")";
         gameWebSocketHandler.broadcastToSlug(slug, message);

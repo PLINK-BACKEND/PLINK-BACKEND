@@ -35,4 +35,7 @@ public class UserFestival { // 한 유저는 여러 행사에 참여할 수 있�
     private String nickname;
 
     private LocalDateTime joinedAt;
+
+    @Column(nullable = false)
+    private boolean secretFrameUnlocked = false;
 }
